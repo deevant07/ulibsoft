@@ -245,4 +245,75 @@ public class JdbcTransactionHistorySearchDAOImpl implements
 	
 	
 	}
+	@Override
+	public List<FineMemberModel> listFinePerStaff(String lid) {
+
+		List<FineMemberModel> rows = new ArrayList<FineMemberModel>();
+		StringBuilder query = new StringBuilder();
+		query.append("SELECT TH.CODE,LIB.BOOKNAME, LIB.AUTHOR1S, LIB.AUTHOR1F, TH.IDATE, TH.RDATE, 'BOOK', TH.FINEAMOUNT ");
+		query.append(" FROM TRANSACTION_HISTORY TH, LIBRARY LIB WHERE  TH.CODE = LIB.ACESSNO AND  TH.LID = ? AND TH.RDATE > (SELECT KEY.TO_HOLD FROM KEYCONSTRAINTS KEY WHERE ID=2)");
+		query.append("AND TH.VALUE = ? ");
+		query.append(" UNION ");
+		query.append("SELECT TH.CDCODE,CD.CDNAME, CD.CDVERSION, null , TH.IDATE, TH.RDATE, 'CD' , TH.FINEAMOUNT ");
+		query.append(" FROM TRANSACTION_HISTORY TH, CDDETAILS CD WHERE  TH.CDCODE = CD.CDCODE AND  TH.LID = ? AND TH.RDATE > (SELECT KEY.TO_HOLD FROM KEYCONSTRAINTS KEY WHERE ID=2) ");
+		query.append("AND TH.VALUE = ? ");
+		query.append(" UNION ");
+		query.append("SELECT TH.MZCODE,MZ.MZNAME, MZ.VOLUME, null , TH.IDATE, TH.RDATE, 'MZ' , TH.FINEAMOUNT ");
+		query.append(" FROM TRANSACTION_HISTORY TH, MZDETAILS MZ WHERE  TH.MZCODE = MZ.ACCESSNO AND  TH.LID = ? AND TH.RDATE > (SELECT KEY.TO_HOLD FROM KEYCONSTRAINTS KEY WHERE ID=2) ");
+		query.append("AND TH.VALUE = ? ");
+				
+		String FETCH_ID = query.toString();
+		
+		try {
+		
+			pstmt = con.prepareStatement(FETCH_ID);
+			pstmt.setString(1, lid);
+			pstmt.setString(2, "1");
+			pstmt.setString(3, lid);
+			pstmt.setString(4, "1");
+			pstmt.setString(5, lid);
+			pstmt.setString(6, "1");
+			
+			rs = pstmt.executeQuery();
+		
+			while (rs.next()) {
+				FineMemberModel tranRcrd = new FineMemberModel();
+				tranRcrd.setCode(rs.getString(1));
+				tranRcrd.setItemName(rs.getString(2));
+				tranRcrd.setType(rs.getString(7));
+				if ( "BOOK".equals(tranRcrd.getType()) )
+					tranRcrd.setSpec(rs.getString(3) + rs.getString(4));
+				else
+					tranRcrd.setSpec(rs.getString(3));
+				tranRcrd.setIssuedDate(rs.getDate(5));
+				tranRcrd.setReturnDate(rs.getDate(6));						
+				tranRcrd.setFineAmount(rs.getFloat(8));
+				rows.add(tranRcrd);
+			}
+		} catch (SQLException sqlex) {
+			log.error("SQLException while fetching transacted records per staff id: "+lid, sqlex);
+		} finally {
+			if (pstmt != null) {
+				try {
+					pstmt.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the Statement "
+									+ e.getMessage(), e);
+				}
+			}
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the ResultSet "
+									+ e.getMessage(), e);
+				}
+		}
+		return rows;	
+	
+	
+	}
+
 }

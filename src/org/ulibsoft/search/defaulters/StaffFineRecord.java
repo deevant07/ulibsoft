@@ -1,47 +1,60 @@
 package org.ulibsoft.search.defaulters;
 
-import java.awt.*;
-import java.sql.*;
-import javax.swing.*;
-import java.awt.event.*;
-import javax.swing.border.*;
-import java.util.*;
-import org.ulibsoft.menu.PopUpMenu;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.Vector;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.border.TitledBorder;
+
+import org.ulibsoft.core.ui.CustomTable;
+import org.ulibsoft.dao.factory.DAOFactory;
+import org.ulibsoft.dao.search.transaction.TransactionHistorySearchDAO;
+import org.ulibsoft.login.Login;
+import org.ulibsoft.model.FineMemberModel;
 import org.ulibsoft.util.AbsoluteConstraints;
 import org.ulibsoft.util.AbsoluteLayout;
-import org.ulibsoft.util.MyDriver;
 import org.ulibsoft.util.ScreenResolution;
+import org.ulibsoft.util.datatype.DateHelper;
 
 public class StaffFineRecord extends JFrame
   {
 
-     private JLabel lid;
-     private JTextField no;
-     private JButton book,cd,mz,find,next,can;
-     private JPanel ltpn,p2;
-     private JTable lttable;
-     private JButton but1,but2,print;
-     private JLabel but0;
-     private Container c;
+     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6730654204594890941L;
+	
+	private JLabel lid;
+	private JTextField no;
+	private JButton find, next, can;
+	private JPanel ltpn, p2;
+	private CustomTable lttable;
+	private JButton but1, but2;
+	private JLabel but0;
+	private Container c;
 
-     private Connection  con ;
-     private Statement s ;
-     private ResultSet rs, rs1,rs2 ;
+	private TransactionHistorySearchDAO tranHstrySrchDAO;
 
-     private int count=0,count1=0;
-
-     public StaffFineRecord()
-       {
-           super("Staff Record");
-           setSize(ScreenResolution.SCREEN_WIDTH, ScreenResolution.SCREEN_HEIGHT);
-
-           createComponents();
-          try
-         {
-          con=MyDriver.getConnection();
-         }catch(Exception e){}
-           componentListener();
-       }
+	public StaffFineRecord() {
+		super("Staff Record");
+		setSize(ScreenResolution.SCREEN_WIDTH, ScreenResolution.SCREEN_HEIGHT);
+		tranHstrySrchDAO = DAOFactory.getDAOFactory().getTranHistorySrchDAO();
+		createComponents();
+		componentListener();
+	}
      private void createComponents()
      {
          c = getContentPane( ) ;
@@ -91,7 +104,7 @@ public class StaffFineRecord extends JFrame
 
          no = new JTextField ( );
          no.setEditable(false);
-         //no.setText(Gates.cname.getText().toUpperCase());
+         no.setText(Login.cname.getText().toUpperCase());
          no.setBorder ( new MatteBorder (1, 1, 1, 1, c.getBackground () ) );
          no.setForeground ( new Color ( 255, 0, 153 ) );
          no.setCaretColor ( new Color ( 0, 204, 102 ) );
@@ -101,51 +114,21 @@ public class StaffFineRecord extends JFrame
          find.setBackground ( Color.cyan );
          find.setForeground( Color.black );
          find.setBorder( new BevelBorder( 0 ));
-         ltpn.add ( find, new AbsoluteConstraints( 285,28,100,22) );
-
-         print = new JButton( "PRINT" ) ;
-            print.setBackground (Color.cyan);
-            print.setForeground(Color.black);
-            print.setEnabled(false);
-            print.setBorder(new BevelBorder(0));
-            print.setMnemonic('P');
-         // ltpn.add ( print, new AbsoluteConstraints( 285,28,100,22) );
-
-
-         book = new JButton( "BOOK" ) ;
-         book.setEnabled(false);
-         book.setBackground ( Color.cyan );
-         book.setForeground( Color.black );
-         book.setBorder( new BevelBorder( 0 ));
-         ltpn.add ( book, new AbsoluteConstraints( 60,60,100,25 ) );
-
-         cd = new JButton( "CD/FLOPPY" ) ;
-         cd.setEnabled(false);
-         cd.setBackground ( Color.cyan );
-         cd.setForeground( Color.black );
-         cd.setBorder( new BevelBorder( 0 ));
-         ltpn.add ( cd, new AbsoluteConstraints( 162,60,100,25  ) );
-
-         mz = new JButton( "MAGAZINE" ) ;
-         mz.setBackground ( Color.cyan );
-         mz.setEnabled(false);
-         mz.setForeground( Color.black );
-         mz.setBorder( new BevelBorder( 0 ));
-         ltpn.add ( mz, new AbsoluteConstraints(  264,60,100,25 ) );
+         ltpn.add ( find, new AbsoluteConstraints( 60,60,100,25) );
 
          next = new JButton( "NEXT>>>" ) ;
          next.setBackground ( Color.cyan);
          next.setForeground(Color.black);
          next.setMnemonic('N');
          next.setBorder(new BevelBorder(0));
-         ltpn.add ( next, new AbsoluteConstraints( 110, 90, 100, 25 ) );
+         ltpn.add ( next, new AbsoluteConstraints( 162,60,100,25 ) );
 
          can = new JButton( "EXIT" ) ;
          can.setBackground ( Color.cyan);
          can.setForeground( Color.black);
          can.setMnemonic('X');
          can.setBorder(new BevelBorder(0));
-         ltpn.add ( can, new AbsoluteConstraints( 212, 90, 100, 25 ) );
+         ltpn.add ( can, new AbsoluteConstraints( 264,60,100,25 ) );
 
          setVisible(true);
 
@@ -157,205 +140,65 @@ public class StaffFineRecord extends JFrame
            {
                public void actionPerformed(ActionEvent e)
                {
-                 try
-                  {
-                    s = con.createStatement();
-                    rs = s.executeQuery("SELECT LIB.ACESSNO,LIB.BOOKNAME, LIB.AUTHOR1S||LIB.AUTHOR1F, BD.IDATE, BD.RDATE FROM BOOKDETAILS BD,LIBRARY LIB WHERE BD.LID ="+"'"+ no.getText().toUpperCase()+"'"+"AND BD.CODE=LIB.ACESSNO AND  BD.RDATE > (SELECT KEY.TO_HOLD FROM KEYCONSTRAINTS KEY WHERE ID=2)" );
-                       while(rs.next() )
-                         {
-                            count1++;
-                            book.setEnabled(true);
-                         }
-
-                    rs1 = s.executeQuery("SELECT CD.CDCODE,CD.CDNAME,CD.CDVERSION,BD.IDATE,BD.RDATE FROM BOOKDETAILS BD,CDDETAILS CD WHERE BD.LID ="+"'"+ no.getText().toUpperCase()+"'"+"AND CD.CDCODE=BD.CDCODE AND  BD.RDATE > (SELECT KEY.TO_HOLD FROM KEYCONSTRAINTS KEY WHERE ID=2)" );
-                        while( rs1.next() )
-                          {
-                             count1++;
-                             cd.setEnabled(true);
-                          }
-
-                    rs2 = s.executeQuery("SELECT MD.ACCESSNO,MD.MZNAME,MD.VOLUME,BD.IDATE,BD.RDATE FROM BOOKDETAILS BD,MZDETAILS MD WHERE BD.LID ="+"'"+ no.getText().toUpperCase()+"'"+"AND MD.ACCESSNO=BD.MZCODE  AND  BD.RDATE > (SELECT KEY.TO_HOLD FROM KEYCONSTRAINTS KEY WHERE ID=2)" );
-                        while( rs2.next() )
-                          {
-                             count1++;
-                             mz.setEnabled(true);
-                          }
-                    if( count1 == 0 )
-                      {
-                         JOptionPane.showMessageDialog(null,"NO  RECORDS  TO  DISPLAY  !  .  .  .");
-                      }
-                    else
-                      {
-                      //   find.setVisible(false);
-                    //     print.setVisible(true);
-                    //     print.setEnabled(false);
-                      }
-                    s.close();
-                  }
-                catch(SQLException sqe)
-                  {
-                    JOptionPane.showMessageDialog (null,sqe.getMessage(),"ERROR",JOptionPane.ERROR_MESSAGE );
-                    sqe.printStackTrace();
-                  }
+            	   List<FineMemberModel> transMdls = tranHstrySrchDAO.listFinePerStaff(no.getText().toUpperCase());
+            	   if ( transMdls != null && transMdls.size() > 0 )
+            	   {
+            		   populateList(transMdls);           		   
+            	   }else
+            		   JOptionPane.showMessageDialog(null,"NO RECORDS TO DISPLAY !  .  .  .");
                }
            }
            );
-           book.addActionListener(new ActionListener()
-           {
-               public void actionPerformed(ActionEvent e)
-               {
-                   try
-                   {
-                    s=con.createStatement();
-                    rs=s.executeQuery ("SELECT  LIB.ACESSNO ACESSNO,LIB.BOOKNAME BOOKNAME, LIB.AUTHOR1S||LIB.AUTHOR1F AUTHOR,TO_CHAR(BD.IDATE,'DD-MON-YYYY') IDATE, TO_CHAR(BD.RDATE,'DD-MON-YYYY') RDATE FROM BOOKDETAILS BD,LIBRARY LIB WHERE BD.LID="+"'"+no.getText().toUpperCase()+"'"+"AND VALUE='1'"+"AND BD.CODE=LIB.ACESSNO" );
-                    while(rs.next())
-                    {
-                        getTable(rs);
-                    }
-                  //  print.setEnabled(true);
-                    s.close();
-                   }catch(SQLException sqe)
-                  {
-                    JOptionPane.showMessageDialog (null,sqe.getMessage(),"ERROR",JOptionPane.ERROR_MESSAGE );
-                    sqe.printStackTrace();
-                  }
-
-               }
-           }
-           );
-           cd.addActionListener(new ActionListener()
-           {
-               public void actionPerformed(ActionEvent e)
-               {
-                   try
-                   {
-                    s=con.createStatement();
-                    rs=s.executeQuery ("SELECT CD.CDNAME, CD.CDVERSION, CD.CDCODE,TO_CHAR(BD.IDATE,'DD-MON-YYYY') IDATE, TO_CHAR(BD.RDATE,'DD-MON-YYYY') RDATE FROM BOOKDETAILS BD,CDDETAILS CD WHERE BD.LID="+"'"+no.getText().toUpperCase()+"'"+"AND BD.VALUE='2'"+"AND CD.CDCODE=BD.CDCODE" );
-                    while(rs.next())
-                    {
-                        getTable(rs);
-                    }
-                   // print.setEnabled(true);
-                    s.close();
-                   }catch(SQLException sqe)
-                  {
-                    JOptionPane.showMessageDialog (null,sqe.getMessage(),"ERROR",JOptionPane.ERROR_MESSAGE );
-                    sqe.printStackTrace();
-                  }
-               }
-           }
-           );
-           mz.addActionListener(new ActionListener()
-           {
-               public void actionPerformed(ActionEvent e)
-               {
-                  try
-                   {
-                    s=con.createStatement();
-                     rs=s.executeQuery ("SELECT MZ.MZNAME, MZ.VOLUME, MZ.ACCESSNO,TO_CHAR(BD.IDATE,'DD-MON-YYYY') IDATE , TO_CHAR(BD.RDATE,'DD-MON-YYYY') RDATE FROM BOOKDETAILS BD,MZDETAILS MZ WHERE BD.LID="+"'"+no.getText().toUpperCase()+"'"+"AND BD.VALUE='3'"+"AND MZ.ACCESSNO=BD.MZCODE" );
-                    while(rs.next())
-                    {
-                        getTable(rs);
-                    }
-                   // print.setEnabled(true);
-                    s.close();
-                   }catch(SQLException sqe)
-                  {
-                    JOptionPane.showMessageDialog (null,sqe.getMessage(),"ERROR",JOptionPane.ERROR_MESSAGE );
-                    sqe.printStackTrace();
-                  }
-               }
-           }
-           );
-
-            next.addActionListener( new ActionListener()
-          {
-            public void actionPerformed( ActionEvent e )
-              {
-                 no.setText("");
-                 print.setVisible(false);
-                 find.setVisible(true);
-              }
-          }
-        );
-
-
            can.addActionListener( new ActionListener()
           {
             public void actionPerformed( ActionEvent e )
               {
-                try
-              {
-                con.close();
-              }
-            catch( SQLException sqlex )
-              {
-                JOptionPane.showMessageDialog(null,"UNABLE TO DISCONNECT","Exception",JOptionPane.ERROR_MESSAGE);
-                sqlex.printStackTrace();
-              }
                 setVisible(false);
-               }
+              }
           }
         );
      }
+     private Vector<String> getDisplayColumns() {
+    		Vector<String> cols = new Vector<>();
+    		cols.add("Code");
+    		cols.add("Name");
+    		cols.add("Author/Version");
+    		cols.add("Issued Date");
+    		cols.add("Return Date");
+    		cols.add("Type");
+    		cols.add("Fine Amount");
+    		return cols;
+    	}
 
-      private void getTable( ResultSet rs )
-       {
-         Vector columnHeads = new Vector();
-         Vector rows = new Vector();
-         try
-           {
-                ResultSetMetaData rsmd = rs.getMetaData();
-                for(int i = 1;i <= rsmd.getColumnCount(); i++ )
-                {
-                columnHeads.addElement( rsmd.getColumnName(i) );
+	private void populateList(List<FineMemberModel> records) {
 
-                }
+		if (records.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "NO RECORDS TO DISPLAY !...",
+					"STAFF FINE DETAILS AVAILABLE",
+					JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
 
-                do
-                 {
-                   rows.addElement( getNextRow( rs,rsmd ) );
-                 }while( rs.next() );
+		Vector<Vector<Object>> rows = new Vector<>();
+		for (FineMemberModel row : records) {
+			Vector<Object> rowData = new Vector<Object>();
+			rowData.add(row.getCode());
+			rowData.add(row.getItemName());
+			rowData.add(row.getSpec());
+			rowData.add(DateHelper.format(row.getIssuedDate()));
+			rowData.add(DateHelper.format(row.getReturnDate()));
+			rowData.add(row.getType());
+			rowData.add(row.getFineAmount());
+			rows.add(rowData);
+		}
+		lttable = new CustomTable(getDisplayColumns(),
+				"STAFF FINE-RECORD SEARCH");
+		lttable.populateData(rows);
+		p2.add(lttable.getPanel(), BorderLayout.CENTER);
+		validate();
+	}
 
-                lttable = new JTable(rows,columnHeads);
-                lttable.setBackground(Color.pink);
-                lttable.setEnabled (false);
-                p2.add(lttable,BorderLayout.CENTER);
-                JScrollPane spane =new JScrollPane(lttable);
-                p2.add(spane,BorderLayout.CENTER);
-                validate();
-
-           }
-         catch( SQLException sqlex )
-           {
-             JOptionPane.showMessageDialog(null,sqlex.getMessage(),"Exception",JOptionPane.ERROR_MESSAGE);
-             sqlex.printStackTrace();
-           }
-      }
-
-    private Vector getNextRow( ResultSet rs,ResultSetMetaData rsmd )
-     throws SQLException
-      {
-         Vector currentRow = new Vector();
-
-         for(int i=1;i <= rsmd.getColumnCount();i++ )
-         {
-
-             switch( rsmd.getColumnType(i) )
-              {
-                 case Types.VARCHAR : String tp=rs.getString(i);
-                                      currentRow.addElement( tp );
-                                      break;
-
-                 default:             String tp1=rs.getString(i);
-                                      currentRow.addElement( tp1 );
-              }
-           }
-         return currentRow;
-      }
-
-     public static void main( String a[] )
-       {
-          new StaffFineRecord();
-       }
+	public static void main(String a[]) {
+		new StaffFineRecord();
+	}
   }

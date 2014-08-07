@@ -171,7 +171,7 @@ public class StudentFineRecord extends JFrame
       		
        	if (records.isEmpty()) {
    			JOptionPane.showMessageDialog(null, "NO RECORDS TO DISPLAY !...",
-   					"STUDENT TRANSACTION HISTORY NOT AVAILABLE", JOptionPane.INFORMATION_MESSAGE);
+   					"STUDENT FINE DETAILS NOT AVAILABLE", JOptionPane.INFORMATION_MESSAGE);
    			return;
    		}
 

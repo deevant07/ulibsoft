@@ -15,4 +15,11 @@ public interface TransactionHistorySearchDAO {
 	 * @return
 	 */
 	public List<FineMemberModel> listFinePerStudent(String adno);
+	
+	/**
+	 * List the fine details along with book, cd and magazine details.
+	 * @param adno
+	 * @return
+	 */
+	public List<FineMemberModel> listFinePerStaff(String lid);
 }
