@@ -917,7 +917,7 @@ public class JdbcBookTransactionSearchDAOImpl implements
 
 		List<BKTransMemberModel> rows = new ArrayList<BKTransMemberModel>();
 		StringBuilder query = new StringBuilder();
-		query.append("SELECT ST.ADNO, ST.SNAME, ST.BRANCH, ST.YEAR, BK.IDATE, BK.RDATE ");
+		query.append("SELECT ST.ADNO, ST.SNAME, ST.BRANCH, ST.YEAR,BK.CODE, BK.IDATE, BK.RDATE ");
 		query.append(" FROM BKTRANSACTION BK, STUDENTDETAILS ST WHERE BK.ADNO = ST.ADNO ");
 		if ( filters != null )
 		{
@@ -977,9 +977,10 @@ public class JdbcBookTransactionSearchDAOImpl implements
 				bkTranRcrd.setId(rs.getString(1));
 				bkTranRcrd.setName(rs.getString(2));
 				bkTranRcrd.setDept(rs.getString(3));
-				bkTranRcrd.setYear(rs.getString(4));			
-				bkTranRcrd.setIssuedDate(rs.getDate(5));
-				bkTranRcrd.setReturnDate(rs.getDate(6));
+				bkTranRcrd.setYear(rs.getString(4));
+				bkTranRcrd.setCode(rs.getString(5));
+				bkTranRcrd.setIssuedDate(rs.getDate(6));
+				bkTranRcrd.setReturnDate(rs.getDate(7));
 				rows.add(bkTranRcrd);
 			}
 		} catch (SQLException sqlex) {
@@ -1005,4 +1006,5 @@ public class JdbcBookTransactionSearchDAOImpl implements
 		}
 		return rows;		
 	}
+
 }

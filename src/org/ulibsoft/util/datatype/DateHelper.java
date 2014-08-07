@@ -28,6 +28,13 @@ public class DateHelper {
 		SimpleDateFormat sf = new SimpleDateFormat("dd-MMM-yyyy");
 		return sf.format(date);
 	}
+	public static String formatTime(Date date) 
+	{
+		if ( date == null )
+			return null;
+		SimpleDateFormat sf = new SimpleDateFormat("HH:mm:ss");
+		return sf.format(date);
+	}
 	public static Date getCurrentDate()
 	{
 		Calendar cal = Calendar.getInstance();
@@ -36,6 +43,10 @@ public class DateHelper {
 	public static String getCurrentDateString()
 	{
 		return format(getCurrentDate());
+	}
+	public static String getCurrentTimeString()
+	{
+		return formatTime(getCurrentDate());
 	}
 	public static Date addDaysToCurrent(int noDays)
 	{

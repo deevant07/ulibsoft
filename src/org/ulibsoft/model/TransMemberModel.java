@@ -16,7 +16,7 @@ public class TransMemberModel {
 	private String spec;
 	private Date issuedDate;
 	private Date returnDate;
-	private String type;
+	private String type;	
 		
 	/**
 	 * @return the code
