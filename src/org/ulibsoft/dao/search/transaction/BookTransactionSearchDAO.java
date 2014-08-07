@@ -126,7 +126,11 @@ public interface BookTransactionSearchDAO {
 	 */
 	public List<BKTransMemberModel> findPendingBooks(Map<SearchFilter.PendingCriteria, Object> filters);
 	
-	
+	/**
+	 * Fetch the list of staff with pending books
+	 * @return
+	 */
+	public List<BKTransMemberModel> findStaffPendingBooks(Map<SearchFilter.PendingCriteria, Object> filters);
 	
 	
 }

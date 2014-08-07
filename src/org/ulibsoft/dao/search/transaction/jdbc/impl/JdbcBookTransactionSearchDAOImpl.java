@@ -913,6 +913,97 @@ public class JdbcBookTransactionSearchDAOImpl implements
 	
 	}
 	@Override
+	public List<BKTransMemberModel> findStaffPendingBooks(Map<SearchFilter.PendingCriteria, Object> filters) {
+
+		List<BKTransMemberModel> rows = new ArrayList<BKTransMemberModel>();
+		StringBuilder query = new StringBuilder();
+		query.append("SELECT SF.LID, SF.LNAME, SF.DEPT, BK.CODE, BK.IDATE, BK.RDATE ");
+		query.append(" FROM BKTRANSACTION1 BK, STAFF SF, KEYCONSTRAINTS KEY WHERE KEY.ID = 2 AND BK.LID = SF.LID ");
+		if ( filters != null )
+		{
+			if ( filters.containsKey(SearchFilter.PendingCriteria.PNDNG_DATE))
+				query.append(" AND  ( BK.RDATE <=  ? AND ( BK.RDATE <= KEY.TO_HOLD OR BK.RDATE <= ?)");
+			if ( filters.containsKey(SearchFilter.PendingCriteria.PNDNG_ID))
+				query.append(" AND  SF.LID =  ? ");
+			if ( filters.containsKey(SearchFilter.PendingCriteria.PNDNG_BRANCH))
+				query.append(" AND SF.DEPT LIKE ? ");			
+			if ( !filters.containsKey(SearchFilter.PendingCriteria.PNDNG_DATE))
+				query.append(" AND ( BK.RDATE <=  ? OR BK.RDATE <= KEY.TO_HOLD ) ");
+		}else
+			query.append(" AND  BK.RDATE <  ? ");
+			
+		String FETCH_ID = query.toString();
+		
+		try {
+		
+			pstmt = con.prepareStatement(FETCH_ID);
+			int cnt = 1;
+			if ( filters != null )
+			{
+				if ( filters.containsKey(SearchFilter.PendingCriteria.PNDNG_DATE))
+				{
+					Object val = filters.get(SearchFilter.PendingCriteria.PNDNG_DATE);
+					if ( val != null && val instanceof Date)
+					pstmt.setDate(cnt, new java.sql.Date(((Date)val).getTime()));
+					cnt++;
+					pstmt.setDate(cnt, new java.sql.Date(DateHelper.getCurrentDate().getTime()));
+					cnt++;
+				}
+				if ( filters.containsKey(SearchFilter.PendingCriteria.PNDNG_ID))
+				{
+					pstmt.setString(cnt, filters.get(SearchFilter.PendingCriteria.PNDNG_ID).toString());
+					cnt++;
+				}	
+				if ( filters.containsKey(SearchFilter.PendingCriteria.PNDNG_BRANCH))
+				{
+					pstmt.setString(cnt, filters.get(SearchFilter.PendingCriteria.PNDNG_BRANCH).toString());
+					cnt++;
+				}				
+				if ( !filters.containsKey(SearchFilter.PendingCriteria.PNDNG_DATE))
+				{
+					pstmt.setDate(cnt, new java.sql.Date(DateHelper.getCurrentDate().getTime()));
+					cnt++;
+				}
+				
+			}else
+				pstmt.setDate(1, new java.sql.Date(DateHelper.getCurrentDate().getTime()));
+						
+			rs = pstmt.executeQuery();
+		
+			while (rs.next()) {
+				BKTransMemberModel bkTranRcrd = new BKTransMemberModel();
+				bkTranRcrd.setId(rs.getString(1));
+				bkTranRcrd.setName(rs.getString(2));
+				bkTranRcrd.setDept(rs.getString(3));				
+				bkTranRcrd.setCode(rs.getString(4));
+				bkTranRcrd.setIssuedDate(rs.getDate(5));
+				bkTranRcrd.setReturnDate(rs.getDate(6));
+				rows.add(bkTranRcrd);
+			}
+		} catch (SQLException sqlex) {
+			log.error("SQLException while fetching pending staff records: ", sqlex);
+		} finally {
+			if (pstmt != null) {
+				try {
+					pstmt.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the Statement "
+									+ e.getMessage(), e);
+				}
+			}
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the ResultSet "
+									+ e.getMessage(), e);
+				}
+		}
+		return rows;		
+	}
+	@Override
 	public List<BKTransMemberModel> findPendingBooks(Map<SearchFilter.PendingCriteria, Object> filters) {
 
 		List<BKTransMemberModel> rows = new ArrayList<BKTransMemberModel>();
