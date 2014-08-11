@@ -25,6 +25,7 @@ import javax.swing.border.TitledBorder;
 
 import org.ulibsoft.dao.factory.DAOFactory;
 import org.ulibsoft.dao.search.transaction.BookTransactionSearchDAO;
+import org.ulibsoft.dao.search.transaction.TransactionHistorySearchDAO;
 import org.ulibsoft.model.BKTransMemberModel;
 import org.ulibsoft.util.AbsoluteConstraints;
 import org.ulibsoft.util.AbsoluteLayout;
@@ -39,7 +40,7 @@ public class BookRecord extends JFrame
 	private static final long serialVersionUID = -7206007774957562022L;
 	private JLabel code;
       private JTextField cd;
-      private JButton std,stf,find;
+      private JButton find;
       private JTable bookdetails;
       private JPanel rtpn,p1;
       private JButton but1,but2,print1;
@@ -47,14 +48,14 @@ public class BookRecord extends JFrame
       private Container c;
       private JButton next,can;
 
-      private BookTransactionSearchDAO bkTranSrchDao;
+      private TransactionHistorySearchDAO tranHistDao;
      
 
      public BookRecord()
        {
            super("BOOK  RECORD  FORM");
            setSize(ScreenResolution.SCREEN_WIDTH, ScreenResolution.SCREEN_HEIGHT);
-           bkTranSrchDao = DAOFactory.getDAOFactory().getBkTranSrchDAO();
+           tranHistDao = DAOFactory.getDAOFactory().getTranHistorySrchDAO();
          createComponents();
         
          componentListener();
@@ -153,7 +154,7 @@ public class BookRecord extends JFrame
          {
              public void actionPerformed(ActionEvent e)
              {
-            	 List<BKTransMemberModel> transMemMdls = bkTranSrchDao.listPerBook(cd.getText());
+            	 List<BKTransMemberModel> transMemMdls = tranHistDao.listPerBook(cd.getText());
             	 if ( transMemMdls != null && transMemMdls.size() > 0 )
             	 {
             		 populateList(transMemMdls);
@@ -167,7 +168,7 @@ public class BookRecord extends JFrame
          {
              public void actionPerformed(ActionEvent e)
              {
-            	 List<BKTransMemberModel> transMemMdls = bkTranSrchDao.listPerBook(cd.getText());
+            	 List<BKTransMemberModel> transMemMdls = tranHistDao.listPerBook(cd.getText());
             	 if ( transMemMdls != null && transMemMdls.size() > 0 )
             	 {
             		 populateList(transMemMdls);
@@ -183,11 +184,7 @@ public class BookRecord extends JFrame
             public void actionPerformed( ActionEvent e )
               {
                  cd.setText("");
-                 print1.setEnabled(false);          
-                 std.setVisible(true);
-                 stf.setVisible(true);
-                 std.setEnabled(false);
-                 stf.setEnabled(false);
+                 print1.setEnabled(false);               
               }
           }
         );

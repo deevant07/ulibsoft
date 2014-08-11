@@ -9,8 +9,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.ulibsoft.constants.ExitStatus;
@@ -23,7 +25,6 @@ import org.ulibsoft.model.BKTranStudModel;
 import org.ulibsoft.model.BKTransMemberModel;
 import org.ulibsoft.model.BookModel;
 import org.ulibsoft.model.TransMemberModel;
-import org.ulibsoft.search.defaulters.PendingList;
 import org.ulibsoft.util.MyDriver;
 import org.ulibsoft.util.datatype.DateHelper;
 
@@ -785,65 +786,6 @@ public class JdbcBookTransactionSearchDAOImpl implements
 		return rows;	
 	
 	}
-	public List<BKTransMemberModel> listPerBook(String code)
-	{
-
-		List<BKTransMemberModel> rows = new ArrayList<BKTransMemberModel>();
-		StringBuilder query = new StringBuilder();
-		query.append("SELECT TH.ADNO, TH.CODE, TH.IDATE, TH.RDATE, ST.SNAME, ST.BRANCH, ST.YEAR ");
-		query.append(" FROM TRANSACTION_HISTORY TH, STUDENTDETAILS ST WHERE TH.CODE = ? AND  TH.ADNO = ST.ADNO ");
-		query.append("AND TH.VALUE = ? ");
-		query.append(" UNION ");
-		query.append("SELECT TH.LID, TH.CODE, TH.IDATE, TH.RDATE, SF.LNAME, SF.DEPT, '1' ");
-		query.append(" FROM TRANSACTION_HISTORY TH, STAFF SF WHERE TH.CODE = ? AND  TH.LID = SF.LID ");
-		query.append("AND TH.VALUE = ? ");
-				
-		String FETCH_ID = query.toString();
-		
-		try {
-		
-			pstmt = con.prepareStatement(FETCH_ID);
-			pstmt.setString(1, code);
-			pstmt.setString(2, "1");
-			pstmt.setString(3, code);
-			pstmt.setString(4, "1");
-			rs = pstmt.executeQuery();
-		
-			while (rs.next()) {
-				BKTransMemberModel bkTranRcrd = new BKTransMemberModel();
-				bkTranRcrd.setId(rs.getString(1));
-				bkTranRcrd.setCode(rs.getString(2));
-				bkTranRcrd.setIssuedDate(rs.getDate(3));
-				bkTranRcrd.setReturnDate(rs.getDate(4));
-				bkTranRcrd.setName(rs.getString(5));
-				bkTranRcrd.setDept(rs.getString(6));
-				bkTranRcrd.setYear(rs.getString(7));			
-				rows.add(bkTranRcrd);
-			}
-		} catch (SQLException sqlex) {
-			log.error("SQLException while fetching transacted staff records per book id: "+code, sqlex);
-		} finally {
-			if (pstmt != null) {
-				try {
-					pstmt.close();
-				} catch (SQLException e) {
-					log.error(
-							"SQLException while closing the Statement "
-									+ e.getMessage(), e);
-				}
-			}
-			if (rs != null)
-				try {
-					rs.close();
-				} catch (SQLException e) {
-					log.error(
-							"SQLException while closing the ResultSet "
-									+ e.getMessage(), e);
-				}
-		}
-		return rows;	
-	
-	}
 	public List<TransMemberModel> listPerStudent(String adno)
 	{
 
@@ -1096,6 +1038,219 @@ public class JdbcBookTransactionSearchDAOImpl implements
 				}
 		}
 		return rows;		
+	}
+	public List<BKTransMemberModel> findMembersPerBook(String code)
+	{
+
+		List<BKTransMemberModel> rows = new ArrayList<BKTransMemberModel>();
+		StringBuilder query = new StringBuilder();
+		query.append("SELECT BK.ADNO, BK.CODE, BK.IDATE, BK.RDATE, ST.SNAME, ST.BRANCH, ST.YEAR, LIB.AUTHOR1S, LIB.AUTHOR1F, ");
+		query.append(" LIB.BOOKNAME FROM BKTRANSACTION BK, STUDENTDETAILS ST,LIBRARY LIB WHERE BK.CODE = ? ");
+		query.append(" AND  BK.ADNO = ST.ADNO AND BK.CODE = LIB.ACESSNO ");
+		query.append(" UNION ");
+		query.append("SELECT BK1.LID, BK1.CODE, BK1.IDATE, BK1.RDATE, SF.LNAME, SF.DEPT, '1', LIB.AUTHOR1S, LIB.AUTHOR1F,  ");
+		query.append(" LIB.BOOKNAME FROM BKTRANSACTION1 BK1, STAFF SF, LIBRARY LIB WHERE BK1.CODE = ? ");
+		query.append("AND BK1.LID = SF.LID AND BK1.CODE = LIB.ACESSNO ");
+
+				
+		String FETCH_ID = query.toString();
+		
+		try {
+		
+			pstmt = con.prepareStatement(FETCH_ID);
+			pstmt.setString(1, code);
+			pstmt.setString(2, code);
+
+			rs = pstmt.executeQuery();
+		
+			while (rs.next()) {
+				BKTransMemberModel bkTranRcrd = new BKTransMemberModel();
+				bkTranRcrd.setId(rs.getString(1));
+				bkTranRcrd.setCode(rs.getString(2));
+				bkTranRcrd.setIssuedDate(rs.getDate(3));
+				bkTranRcrd.setReturnDate(rs.getDate(4));
+				bkTranRcrd.setName(rs.getString(5));
+				bkTranRcrd.setDept(rs.getString(6));
+				bkTranRcrd.setYear(rs.getString(7));
+				bkTranRcrd.setAuthorSurname(rs.getString(8));
+				bkTranRcrd.setAuthorName(rs.getString(9));
+				bkTranRcrd.setBookName(rs.getString(10));
+				rows.add(bkTranRcrd);
+			}
+		} catch (SQLException sqlex) {
+			log.error("SQLException while fetching transacted student and staff records per book id: "+code, sqlex);
+		} finally {
+			if (pstmt != null) {
+				try {
+					pstmt.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the Statement "
+									+ e.getMessage(), e);
+				}
+			}
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the ResultSet "
+									+ e.getMessage(), e);
+				}
+		}
+		return rows;	
+	
+	}
+	public Set<String> findCurrentAuthorList()
+	{
+		Set<String> rows = new HashSet<>();
+		StringBuilder query = new StringBuilder();
+		query.append("SELECT DISTINCT( LIB.AUTHOR1S||LIB.AUTHOR1F ) FROM LIBRARY LIB,BKTRANSACTION1 BK1 WHERE LIB.ACESSNO=BK1.CODE ");		
+		query.append(" UNION ");
+		query.append("SELECT DISTINCT( LIB.AUTHOR1S||LIB.AUTHOR1F ) FROM LIBRARY LIB,BKTRANSACTION BK WHERE LIB.ACESSNO=BK.CODE  ");
+		
+				
+		String FETCH_ID = query.toString();
+		
+		try {
+		
+			pstmt = con.prepareStatement(FETCH_ID);			
+			rs = pstmt.executeQuery();
+		
+			while (rs.next()) {				
+				rows.add(rs.getString(1));
+			}
+		} catch (SQLException sqlex) {
+			log.error("SQLException while fetching Authors list: ", sqlex);
+		} finally {
+			if (pstmt != null) {
+				try {
+					pstmt.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the Statement "
+									+ e.getMessage(), e);
+				}
+			}
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the ResultSet "
+									+ e.getMessage(), e);
+				}
+		}
+		return rows;	
+
+	}
+	public Set<String> findCurrentBookNameList(String authorName)
+	{
+		Set<String> rows = new HashSet<>();
+		StringBuilder query = new StringBuilder();
+		query.append("SELECT DISTINCT( LIB.BOOKNAME ) FROM LIBRARY LIB,BKTRANSACTION1 BK1 WHERE LIB.ACESSNO=BK1.CODE AND LIB.AUTHOR1S||LIB.AUTHOR1F LIKE ? ");		
+		query.append(" UNION ");
+		query.append("SELECT DISTINCT( LIB.BOOKNAME ) FROM LIBRARY LIB,BKTRANSACTION BK WHERE LIB.ACESSNO=BK.CODE  AND LIB.AUTHOR1S||LIB.AUTHOR1F LIKE ? ");
+
+				
+		String FETCH_ID = query.toString();
+		
+		try {
+		
+			pstmt = con.prepareStatement(FETCH_ID);			
+			
+			pstmt.setString(1, authorName);
+			pstmt.setString(2, authorName);
+			rs = pstmt.executeQuery();
+			while (rs.next()) {				
+				rows.add(rs.getString(1));
+			}
+		} catch (SQLException sqlex) {
+			log.error("SQLException while fetching Booknames list: ", sqlex);
+		} finally {
+			if (pstmt != null) {
+				try {
+					pstmt.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the Statement "
+									+ e.getMessage(), e);
+				}
+			}
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the ResultSet "
+									+ e.getMessage(), e);
+				}
+		}
+		return rows;	
+
+	}
+	public List<BKTransMemberModel> findMembersPerBook(String bookName, String authorName)
+	{
+
+		List<BKTransMemberModel> rows = new ArrayList<BKTransMemberModel>();
+		StringBuilder query = new StringBuilder();
+		query.append("SELECT BK.ADNO, BK.CODE, BK.IDATE, BK.RDATE, ST.SNAME, ST.BRANCH, ST.YEAR, LIB.AUTHOR1S, LIB.AUTHOR1F, ");
+		query.append(" LIB.BOOKNAME FROM BKTRANSACTION BK, STUDENTDETAILS ST,LIBRARY LIB WHERE LIB.BOOKNAME LIKE ? AND LIB.AUTHOR1S||LIB.AUTHOR1F LIKE ? ");
+		query.append(" AND  BK.ADNO = ST.ADNO AND BK.CODE = LIB.ACESSNO ");
+		query.append(" UNION ");
+		query.append("SELECT BK1.LID, BK1.CODE, BK1.IDATE, BK1.RDATE, SF.LNAME, SF.DEPT, '1', LIB.AUTHOR1S, LIB.AUTHOR1F,  ");
+		query.append(" LIB.BOOKNAME FROM BKTRANSACTION1 BK1, STAFF SF, LIBRARY LIB WHERE LIB.BOOKNAME LIKE ? AND LIB.AUTHOR1S||LIB.AUTHOR1F LIKE ? ");
+		query.append("AND BK1.LID = SF.LID AND BK1.CODE = LIB.ACESSNO ");
+
+				
+		String FETCH_ID = query.toString();
+		
+		try {
+		
+			pstmt = con.prepareStatement(FETCH_ID);
+			pstmt.setString(1, bookName);
+			pstmt.setString(2, authorName);
+			pstmt.setString(3, bookName);
+			pstmt.setString(4, authorName);
+
+			rs = pstmt.executeQuery();
+		
+			while (rs.next()) {
+				BKTransMemberModel bkTranRcrd = new BKTransMemberModel();
+				bkTranRcrd.setId(rs.getString(1));
+				bkTranRcrd.setCode(rs.getString(2));
+				bkTranRcrd.setIssuedDate(rs.getDate(3));
+				bkTranRcrd.setReturnDate(rs.getDate(4));
+				bkTranRcrd.setName(rs.getString(5));
+				bkTranRcrd.setDept(rs.getString(6));
+				bkTranRcrd.setYear(rs.getString(7));
+				bkTranRcrd.setAuthorSurname(rs.getString(8));
+				bkTranRcrd.setAuthorName(rs.getString(9));
+				bkTranRcrd.setBookName(rs.getString(10));
+				rows.add(bkTranRcrd);
+			}
+		} catch (SQLException sqlex) {
+			log.error("SQLException while fetching transacted student and staff records per book name: "+bookName +" author :"+authorName, sqlex);
+		} finally {
+			if (pstmt != null) {
+				try {
+					pstmt.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the Statement "
+									+ e.getMessage(), e);
+				}
+			}
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the ResultSet "
+									+ e.getMessage(), e);
+				}
+		}
+		return rows;	
 	}
 
 }

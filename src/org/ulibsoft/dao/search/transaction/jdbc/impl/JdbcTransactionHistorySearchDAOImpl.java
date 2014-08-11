@@ -13,6 +13,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.ulibsoft.constants.ExitStatus;
 import org.ulibsoft.dao.search.transaction.TransactionHistorySearchDAO;
+import org.ulibsoft.model.BKTransMemberModel;
 import org.ulibsoft.model.FineMemberModel;
 import org.ulibsoft.model.TransMemberModel;
 import org.ulibsoft.util.MyDriver;
@@ -311,9 +312,67 @@ public class JdbcTransactionHistorySearchDAOImpl implements
 									+ e.getMessage(), e);
 				}
 		}
+		return rows;		
+	}
+	public List<BKTransMemberModel> listPerBook(String code)
+	{
+
+		List<BKTransMemberModel> rows = new ArrayList<BKTransMemberModel>();
+		StringBuilder query = new StringBuilder();
+		query.append("SELECT TH.ADNO, TH.CODE, TH.IDATE, TH.RDATE, ST.SNAME, ST.BRANCH, ST.YEAR ");
+		query.append(" FROM TRANSACTION_HISTORY TH, STUDENTDETAILS ST WHERE TH.CODE = ? AND  TH.ADNO = ST.ADNO ");
+		query.append("AND TH.VALUE = ? ");
+		query.append(" UNION ");
+		query.append("SELECT TH.LID, TH.CODE, TH.IDATE, TH.RDATE, SF.LNAME, SF.DEPT, '1' ");
+		query.append(" FROM TRANSACTION_HISTORY TH, STAFF SF WHERE TH.CODE = ? AND  TH.LID = SF.LID ");
+		query.append("AND TH.VALUE = ? ");
+				
+		String FETCH_ID = query.toString();
+		
+		try {
+		
+			pstmt = con.prepareStatement(FETCH_ID);
+			pstmt.setString(1, code);
+			pstmt.setString(2, "1");
+			pstmt.setString(3, code);
+			pstmt.setString(4, "1");
+			rs = pstmt.executeQuery();
+		
+			while (rs.next()) {
+				BKTransMemberModel bkTranRcrd = new BKTransMemberModel();
+				bkTranRcrd.setId(rs.getString(1));
+				bkTranRcrd.setCode(rs.getString(2));
+				bkTranRcrd.setIssuedDate(rs.getDate(3));
+				bkTranRcrd.setReturnDate(rs.getDate(4));
+				bkTranRcrd.setName(rs.getString(5));
+				bkTranRcrd.setDept(rs.getString(6));
+				bkTranRcrd.setYear(rs.getString(7));			
+				rows.add(bkTranRcrd);
+			}
+		} catch (SQLException sqlex) {
+			log.error("SQLException while fetching transacted staff records per book id: "+code, sqlex);
+		} finally {
+			if (pstmt != null) {
+				try {
+					pstmt.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the Statement "
+									+ e.getMessage(), e);
+				}
+			}
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the ResultSet "
+									+ e.getMessage(), e);
+				}
+		}
 		return rows;	
 	
-	
 	}
+
 
 }

@@ -92,4 +92,10 @@ public class DateHelper {
 			return 0;
 		return d1.compareTo(d2);
 	}
+	public static java.sql.Date getSqlDate(Date utilDate)
+	{
+		if ( utilDate == null )
+			return null;
+		return new java.sql.Date(utilDate.getTime());
+	}
 }

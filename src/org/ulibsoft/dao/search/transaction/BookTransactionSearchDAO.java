@@ -2,6 +2,7 @@ package org.ulibsoft.dao.search.transaction;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ulibsoft.constants.SearchFilter;
 import org.ulibsoft.model.BKStaffModel;
@@ -114,13 +115,6 @@ public interface BookTransactionSearchDAO {
 	public List<BKTranStaffModel> findStaffsPerBook(String code);
 	
 	/**
-	 * Fetch the list of staff and student who had taken the particular book
-	 * @param code
-	 * @return
-	 */
-	public List<BKTransMemberModel> listPerBook(String code);
-	
-	/**
 	 * Fetch the list of students with pending books
 	 * @return
 	 */
@@ -132,5 +126,29 @@ public interface BookTransactionSearchDAO {
 	 */
 	public List<BKTransMemberModel> findStaffPendingBooks(Map<SearchFilter.PendingCriteria, Object> filters);
 	
+	/**
+	 * Fetch the list of staff and student who had taken the particular book from current transaction
+	 * @param code
+	 * @return
+	 */
+	public List<BKTransMemberModel> findMembersPerBook(String code);
 	
+	/**
+	 * Fetches the list of authors for the books which in current transactions
+	 * @return
+	 */
+	public Set<String> findCurrentAuthorList();
+	
+	/**
+	 * Fetches the list of booknames for the books which in current transactions
+	 * @return
+	 */
+	public Set<String> findCurrentBookNameList(String authorName);
+	
+	/**
+	 * Fetch the list of staff and student who had taken the particular book by author and bookname from current transaction
+	 * @param code
+	 * @return
+	 */
+	public List<BKTransMemberModel> findMembersPerBook(String bookName, String authorName);
 }
