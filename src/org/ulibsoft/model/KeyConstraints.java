@@ -29,7 +29,7 @@ public class KeyConstraints {
 	private int finePerMZ;
 	private Date beginDate;
 	private Date endDate;
-	private String imagePath;
+	
 	/**
 	 * @return the id
 	 */
@@ -282,16 +282,5 @@ public class KeyConstraints {
 	public void setEndDate(Date endDate) {
 		this.endDate = endDate;
 	}
-	/**
-	 * @return the imagePath
-	 */
-	public String getImagePath() {
-		return imagePath;
-	}
-	/**
-	 * @param imagePath the imagePath to set
-	 */
-	public void setImagePath(String imagePath) {
-		this.imagePath = imagePath;
-	}
+	
 }

@@ -1,21 +1,38 @@
 package org.ulibsoft.admin;
 
-import java.awt.*;
-import javax.swing.*;
-import javax.swing.border.*;
-import java.sql.*;
-import java.util.*;
-import java.awt.event.*;
-import java.io.*;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.ParseException;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.border.TitledBorder;
+
+import org.apache.log4j.Logger;
+import org.ulibsoft.dao.core.KeyConstraintDAO;
+import org.ulibsoft.dao.factory.DAOFactory;
 import org.ulibsoft.util.AbsoluteConstraints;
 import org.ulibsoft.util.AbsoluteLayout;
-import org.ulibsoft.util.MyDriver;
 import org.ulibsoft.util.ScreenResolution;
+import org.ulibsoft.util.datatype.DateHelper;
 
 public class KeyConstraints extends JFrame
   {
-      private File file;
-
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -783744640301732024L;
+	private static final Logger log = Logger.getLogger(KeyConstraints.class.getName()) ;
       private JLabel book,cd,mag,std,std1,std2,stf,stf1,stf2;
 
       private JLabel stdbkmin, stdbkmax, stfbkmin, stfbkmax;
@@ -48,98 +65,71 @@ public class KeyConstraints extends JFrame
 
       private JTextField stdbkFine2,stdcdFine2,stdmzFine2;
       private JTextField imagePath2;
-      String result,result1;
-
       private JButton ins,up,quit,next;
 
       private Container c;
-      private JPanel cmppn,pnl;
+      private JPanel cmppn;
 
-      private Connection  con ;
-      private Statement s ;
-      private ResultSet rs, rs1 ;
+      private KeyConstraintDAO keyCnstDao;
 
       public KeyConstraints()
         {
            super("INPUT CONSTRAINTS FORM");
            setSize(ScreenResolution.SCREEN_WIDTH, ScreenResolution.SCREEN_HEIGHT);
-
+           keyCnstDao = DAOFactory.getDAOFactory().getKeyCnstrntDAO();
            createComponents();
-           try
-         {
-          con=MyDriver.getConnection();
-         }catch(Exception e){}
-           try
-           {
-              s=con.createStatement();
-              rs=s.executeQuery("SELECT * FROM KEYCONSTRAINTS WHERE ID=1");
-              while(rs.next())
-              {
-                stdbkmin2.setText(rs.getString(2));
-                stdbkmax2.setText(rs.getString(3));
-                stdbkpd2.setText(rs.getString(4));
-                
-                stdcdmin2.setText(rs.getString(5));
-                stdcdmax2.setText(rs.getString(6));
-                stdcdpd2.setText(rs.getString(7));
-                
-                stdmzmin2.setText(rs.getString(8));
-                stdmzmax2.setText(rs.getString(9));
-                stdmzpd2.setText(rs.getString(10));
-                
-                stdbkRpd2.setText(rs.getString(11));
-                stdbkRcount2.setText(rs.getString(12));
-                
-                stdcdRpd2.setText(rs.getString(13));
-                stdcdRcount2.setText(rs.getString(14));
-                
-                stdmzRpd2.setText(rs.getString(15));
-                stdmzRcount2.setText(rs.getString(16));
-                
-                stdbkFine2.setText(rs.getString(17));
-                stdcdFine2.setText(rs.getString(18));
-                stdmzFine2.setText(rs.getString(19));
-                
-                imagePath2.setText(rs.getString(22));
-
-                
-                
-                
-
-              }
-              rs=s.executeQuery("SELECT MIN_BOOKS,MAX_BOOKS,BOOK_HOLDING_PERIOD,MIN_CDS,MAX_CDS,CD_HOLDING_PERIOD,MIN_MZS,"+
-               "MAX_MZS,MZ_HOLDING_PERIOD,TO_CHAR(FROM_HOLD,'DD-MON-YYYY'),TO_CHAR(TO_HOLD,'DD-MON-YYYY'),IMAGE_PATH FROM KEYCONSTRAINTS WHERE ID=2");
-              while(rs.next())
-              {
-                stfbkmin2.setText(rs.getString(1));
-                stfbkmax2.setText(rs.getString(2));
-                stfbkhold2.setText(rs.getString(3));
-
-                stfcdmin2.setText(rs.getString(4));
-                stfcdmax2.setText(rs.getString(5));
-                stfcdhold2.setText(rs.getString(6));
-                
-                stfmzmin2.setText(rs.getString(7));
-                stfmzmax2.setText(rs.getString(8));
-                stfmzhold2.setText(rs.getString(9));
-
-                stfbk_Hld_From2.setText(rs.getString(10));
-                stfbk_Hld_To2.setText(rs.getString(11));
-                
-                imagePath2.setText(rs.getString(12));
-                ins.setEnabled(false);
-              }
-              s.close();
-
-           }
-           catch(SQLException sqlex)
-           {
-
-            JOptionPane.showMessageDialog(null,"error:"+sqlex.getMessage());
-           }
+           
+           org.ulibsoft.model.KeyConstraints stdKeyCnst = keyCnstDao.findById((short)1);
+           populateStdConstraints(stdKeyCnst);
+           
+           org.ulibsoft.model.KeyConstraints stfKeyCnst = keyCnstDao.findById((short)2);
+           populateStfConstraints(stfKeyCnst);
            componentListener();
         }
-
+      public void populateStdConstraints(org.ulibsoft.model.KeyConstraints keyCnst)
+      {
+    	  stdbkmin2.setText(String.valueOf(keyCnst.getMinBook()));
+          stdbkmax2.setText(String.valueOf(keyCnst.getMaxBook()));
+          stdbkpd2.setText(String.valueOf(keyCnst.getMaxDaysPerBook()));
+          
+          stdcdmin2.setText(String.valueOf(keyCnst.getMinCD()));
+          stdcdmax2.setText(String.valueOf(keyCnst.getMaxCD()));
+          stdcdpd2.setText(String.valueOf(keyCnst.getMaxDaysPerCD()));
+          
+          stdmzmin2.setText(String.valueOf(keyCnst.getMinMZ()));
+          stdmzmax2.setText(String.valueOf(keyCnst.getMaxMZ()));
+          stdmzpd2.setText(String.valueOf(keyCnst.getMaxDaysPerMZ()));
+          
+          stdbkRpd2.setText(String.valueOf(keyCnst.getReneivelPerBook()));
+          stdbkRcount2.setText(String.valueOf(keyCnst.getMaxReneivelPerBook()));
+          
+          stdcdRpd2.setText(String.valueOf(keyCnst.getReneivelPerCD()));
+          stdcdRcount2.setText(String.valueOf(keyCnst.getMaxReneivelPerCD()));
+          
+          stdmzRpd2.setText(String.valueOf(keyCnst.getReneivelPerMZ()));
+          stdmzRcount2.setText(String.valueOf(keyCnst.getReneivelPerMZ()));
+          
+          stdbkFine2.setText(String.valueOf(keyCnst.getFinePerBook()));
+          stdcdFine2.setText(String.valueOf(keyCnst.getFinePerCD()));
+          stdmzFine2.setText(String.valueOf(keyCnst.getFinePerMZ()));
+      }
+      public void populateStfConstraints(org.ulibsoft.model.KeyConstraints keyCnst)
+      {
+    	  stfbkmin2.setText(String.valueOf(keyCnst.getMinBook()));
+          stfbkmax2.setText(String.valueOf(keyCnst.getMaxBook()));
+          stfbkhold2.setText(String.valueOf(keyCnst.getMaxDaysPerBook()));
+          
+          stfcdmin2.setText(String.valueOf(keyCnst.getMinCD()));
+          stfcdmax2.setText(String.valueOf(keyCnst.getMaxCD()));
+          stfcdhold2.setText(String.valueOf(keyCnst.getMaxDaysPerCD()));
+         
+          stfmzmin2.setText(String.valueOf(keyCnst.getMinMZ()));
+          stfmzmax2.setText(String.valueOf(keyCnst.getMaxMZ()));
+          stfmzhold2.setText(String.valueOf(keyCnst.getMaxDaysPerMZ()));
+          
+          stfbk_Hld_From2.setText(DateHelper.format(keyCnst.getBeginDate()));
+          stfbk_Hld_To2.setText(DateHelper.format(keyCnst.getEndDate()));
+      }
       private void createComponents()
         {
            c = getContentPane( ) ;
@@ -379,138 +369,184 @@ public class KeyConstraints extends JFrame
               {
                  public void actionPerformed( ActionEvent e )
                    {
-
-
-                              file=new File(imagePath2.getText());
-                              if(!file.isDirectory())
-                                    {
-                                            int cfirm=JOptionPane.showConfirmDialog(null,"This Directory does not exists\n Create it?","Confirmation",JOptionPane.YES_NO_OPTION);
-                                            if(cfirm==0)
-                                            {
-                                               boolean create= file.mkdir();
-                                               if(create==true)
-                                               JOptionPane.showMessageDialog(null,"Created Succesfully");
-                                            }
-                                    }
-
-
-                      try
-                        {
-
-
-                           s = con.createStatement();
-
-                           int a = s.executeUpdate("INSERT INTO KEYCONSTRAINTS(ID,MIN_BOOKS,MAX_BOOKS,BOOK_HOLDING_PERIOD,MIN_CDS,MAX_CDS,CD_HOLDING_PERIOD,"+
-                                                                              "MIN_MZS,MAX_MZS,MZ_HOLDING_PERIOD,RENEIVAL_PERIOD_BOOK,NO_OF_RENEIVALS_BOOK,"+
-                                                                               "RENEIVAL_PERIOD_CD,NO_OF_RENEIVALS_CD,RENEIVAL_PERIOD_MZ,NO_OF_RENEIVALS_MZ,"+
-                                                                               "FINE_BOOK,FINE_CD,FINE_MZ,"+
-                                                                               "IMAGE_PATH) VALUES(1"+","
-                                                                               +stdbkmin2.getText()+","+stdbkmax2.getText()+","+stdbkpd2.getText()+","
-                                                                               +stdcdmin2.getText()+","+stdcdmax2.getText()+","+stdcdpd2.getText()+","
-                                                                               +stdmzmin2.getText()+","+stdmzmax2.getText()+","+stdmzpd2.getText()+","
-                                                                               +stdbkRpd2.getText()+","+stdbkRcount2.getText()+","
-                                                                               +stdcdRpd2.getText()+","+stdcdRcount2.getText()+","
-                                                                               +stdmzRpd2.getText()+","+stdmzRcount2.getText()+","
-                                                                               +stdbkFine2.getText()+","+stdcdFine2.getText()+","+stdmzFine2.getText()+","
-                                                                               +"'"+imagePath2.getText()+"/'"+")");
-
-
-                          con.commit();
-
-
-                          int b= s.executeUpdate("INSERT INTO KEYCONSTRAINTS(ID,MIN_BOOKS,MAX_BOOKS,BOOK_HOLDING_PERIOD,MIN_CDS,MAX_CDS,CD_HOLDING_PERIOD,"+
-                                                                              "MIN_MZS,MAX_MZS,MZ_HOLDING_PERIOD,FROM_HOLD,TO_HOLD,IMAGE_PATH) VALUES(2,"
-                                                                               +stfbkmin2.getText()+","+stfbkmax2.getText()+","+stfbkhold2.getText()+","
-                                                                               +stfcdmin2.getText()+","+stfcdmax2.getText()+","+stfcdhold2.getText()+","
-                                                                               +stfmzmin2.getText()+","+stfmzmax2.getText()+","+stfmzhold2.getText()+","
-                                                                               +"TO_CHAR(TO_DATE('"+stfbk_Hld_From2.getText()+"'),'DD-MON-YYYY')"+","+"TO_CHAR(TO_DATE('"+stfbk_Hld_To2.getText()+"'),'DD-MON-YYYY')"+","
-                                                                               +"'"+imagePath2.getText()+"/'"+")");
-
-                          con.commit();
-                          ins.setEnabled(false);
-
-
-
-                        }
-                      catch( SQLException sqlex )
-                        {
-                             if(sqlex.getErrorCode()==936)
-                            {
-                                JOptionPane.showMessageDialog(null,"PLEASE ENTER ALL CONSTRAINTS");
-                            }
-
-                        }
-                   }
+                	 org.ulibsoft.model.KeyConstraints keyCnst = new org.ulibsoft.model.KeyConstraints();
+                	 
+                	 keyCnst.setId((short)1);
+                	 if ( stdbkmin2.getText() != null )
+                		 keyCnst.setMinBook((short)Integer.parseInt(stdbkmin2.getText()));
+                	 if ( stdbkmax2.getText() != null )
+                		 keyCnst.setMaxBook((short)Integer.parseInt(stdbkmax2.getText()));
+                	 if ( stdbkpd2.getText() != null )
+                		 keyCnst.setMaxDaysPerBook((short)Integer.parseInt(stdbkpd2.getText()));
+                	 if ( stdcdmin2.getText() != null )
+                		 keyCnst.setMinCD((short)Integer.parseInt(stdcdmin2.getText()));
+                	 if ( stdcdmax2.getText() != null )
+                		 keyCnst.setMaxCD((short)Integer.parseInt(stdcdmax2.getText()));
+                	 if ( stdcdpd2.getText() != null )
+                		 keyCnst.setMaxDaysPerCD((short)Integer.parseInt(stdcdpd2.getText()));
+                	 if ( stdmzmin2.getText() != null )
+                		 keyCnst.setMinMZ((short)Integer.parseInt(stdmzmin2.getText()));
+                	 if ( stdmzmax2.getText() != null )
+                		 keyCnst.setMaxMZ((short)Integer.parseInt(stdmzmax2.getText()));
+                	 if ( stdmzpd2.getText() != null )
+                		 keyCnst.setMaxDaysPerMZ((short)Integer.parseInt(stdmzpd2.getText()));
+                	 if ( stdbkRpd2.getText() != null )
+                		 keyCnst.setReneivelPerBook((short)Integer.parseInt(stdbkRpd2.getText()));
+                	 if ( stdbkRcount2.getText() != null )
+                		 keyCnst.setMaxReneivelPerBook((short)Integer.parseInt(stdbkRcount2.getText()));
+                	 if ( stdcdRpd2.getText() != null )
+                		 keyCnst.setReneivelPerBook((short)Integer.parseInt(stdcdRpd2.getText()));
+                	 if ( stdcdRcount2.getText() != null )
+                		 keyCnst.setMaxReneivelPerBook((short)Integer.parseInt(stdcdRcount2.getText()));
+                	 if ( stdbkFine2.getText() != null )
+                		 keyCnst.setFinePerBook((short)Integer.parseInt(stdbkFine2.getText()));
+                	 if ( stdcdFine2.getText() != null )
+                		 keyCnst.setFinePerBook((short)Integer.parseInt(stdcdFine2.getText()));
+                	 if ( stdmzFine2.getText() != null )
+                		 keyCnst.setFinePerBook((short)Integer.parseInt(stdmzFine2.getText()));
+                	 
+                	 int ret = keyCnstDao.create(keyCnst);
+                	 if ( ret <= 0 )
+                	 {
+                		 log.warn("Key Constraints creation failed");
+                		 JOptionPane.showMessageDialog(null,"CREATE FAILED");
+                	 }
+                	 else
+                	 {
+                		 log.info("Key Constraints created successfully");
+                		 JOptionPane.showMessageDialog(null,"CREATED");
+                	 }
+                	 
+                	 org.ulibsoft.model.KeyConstraints stfCnst = new org.ulibsoft.model.KeyConstraints();
+                	 stfCnst.setId((short)2);
+                	 if ( stfbkmin2.getText() != null )
+                		 stfCnst.setMinBook((short)Integer.parseInt(stfbkmin2.getText()));
+                	 if ( stfbkmax2.getText() != null )
+                		 stfCnst.setMaxBook((short)Integer.parseInt(stfbkmax2.getText()));
+                	 if ( stfbkhold2.getText() != null )
+                		 stfCnst.setMaxDaysPerBook((short)Integer.parseInt(stfbkhold2.getText()));
+                	 if ( stfcdmin2.getText() != null )
+                		 stfCnst.setMinCD((short)Integer.parseInt(stfcdmin2.getText()));
+                	 if ( stfcdmax2.getText() != null )
+                		 stfCnst.setMaxCD((short)Integer.parseInt(stfcdmax2.getText()));
+                	 if ( stfcdhold2.getText() != null )
+                		 stfCnst.setMaxDaysPerCD((short)Integer.parseInt(stfcdhold2.getText()));
+                	 if ( stfmzmin2.getText() != null )
+                		 stfCnst.setMinMZ((short)Integer.parseInt(stfmzmin2.getText()));
+                	 if ( stfmzmax2.getText() != null )
+                		 stfCnst.setMaxMZ((short)Integer.parseInt(stfmzmax2.getText()));
+                	 if ( stfmzhold2.getText() != null )
+                		 stfCnst.setMaxDaysPerMZ((short)Integer.parseInt(stfmzhold2.getText()));
+                	 try {
+						stfCnst.setBeginDate(DateHelper.parse(stfbk_Hld_From2.getText()));
+						stfCnst.setEndDate(DateHelper.parse(stfbk_Hld_To2.getText()));
+                	 } catch (ParseException e1) {
+						JOptionPane.showMessageDialog(null, "Invalid date format, expected (dd-Mon-yyyy)");						
+                	 }
+                	 int ret1 = keyCnstDao.create(stfCnst);
+                	 if ( ret1 <= 0 )
+                	 {
+                		 log.warn("Key Constraintsfor staff creation failed");
+                		 JOptionPane.showMessageDialog(null,"CREATE FAILED");
+                	 }
+                	 else
+                	 {
+                		 log.info("Key Constraints created successfully");
+                		 JOptionPane.showMessageDialog(null,"CREATED");
+                	 }
+                	 
+                }
               }
            );
            up.addActionListener(new ActionListener()
            {
              public void actionPerformed(ActionEvent e)
              {
-                   file=new File(imagePath2.getText());
-                              if(!file.isDirectory())
-                                    {
-                                            int cfirm=JOptionPane.showConfirmDialog(null,"This Directory does not exists\n Create it?","Confirmation",JOptionPane.YES_NO_OPTION);
-                                            if(cfirm==0)
-                                            {
-                                               boolean create= file.mkdir();
-                                               if(create==true)
-                                               JOptionPane.showMessageDialog(null,"Created Succesfully");
-                                            }
-                                    }
-                try
-                {
-                 s=con.createStatement();
-                 int a1=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MIN_BOOKS="+stdbkmin2.getText()+" WHERE ID=1");
-                 int a2=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MAX_BOOKS="+stdbkmax2.getText()+" WHERE ID=1");
-                 int a3=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MIN_CDS="+stdcdmin2.getText()+" WHERE ID=1");
-                 int a4=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MAX_CDS="+stdcdmax2.getText()+" WHERE ID=1");
-                 int a5=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MIN_MZS="+stdmzmin2.getText()+" WHERE ID=1");
-                 int a6=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MAX_MZS="+stdmzmax2.getText()+" WHERE ID=1");
-                 int a7=s.executeUpdate("UPDATE KEYCONSTRAINTS SET BOOK_HOLDING_PERIOD="+stdbkpd2.getText()+" WHERE ID=1");
-                 int a8=s.executeUpdate("UPDATE KEYCONSTRAINTS SET CD_HOLDING_PERIOD="+stdcdpd2.getText()+" WHERE ID=1");
-                 int a9=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MZ_HOLDING_PERIOD="+stdmzpd2.getText()+" WHERE ID=1");
-                 int a10=s.executeUpdate("UPDATE KEYCONSTRAINTS SET RENEIVAL_PERIOD_BOOK="+stdbkRpd2.getText()+" WHERE ID=1");
-                 int a11=s.executeUpdate("UPDATE KEYCONSTRAINTS SET RENEIVAL_PERIOD_CD="+stdcdRpd2.getText()+" WHERE ID=1");
-                 int a12=s.executeUpdate("UPDATE KEYCONSTRAINTS SET RENEIVAL_PERIOD_MZ="+stdmzRpd2.getText()+" WHERE ID=1");
-                 int a13=s.executeUpdate("UPDATE KEYCONSTRAINTS SET NO_OF_RENEIVALS_BOOK="+stdbkRcount2.getText()+" WHERE ID=1");
-                 int a14=s.executeUpdate("UPDATE KEYCONSTRAINTS SET NO_OF_RENEIVALS_CD="+stdcdRcount2.getText()+" WHERE ID=1");
-                 int a15=s.executeUpdate("UPDATE KEYCONSTRAINTS SET NO_OF_RENEIVALS_MZ="+stdmzRcount2.getText()+" WHERE ID=1");
-                 int a16=s.executeUpdate("UPDATE KEYCONSTRAINTS SET FINE_BOOK="+stdbkFine2.getText()+" WHERE ID=1");
-                 int a17=s.executeUpdate("UPDATE KEYCONSTRAINTS SET FINE_CD="+stdcdFine2.getText()+" WHERE ID=1");
-                 int a18=s.executeUpdate("UPDATE KEYCONSTRAINTS SET FINE_MZ="+stdmzFine2.getText()+" WHERE ID=1");
-                 int a19=s.executeUpdate("UPDATE KEYCONSTRAINTS SET IMAGE_PATH='"+imagePath2.getText()+"/' WHERE ID=1");
-
-                 con.commit();
-
-
-                 int b1=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MIN_BOOKS="+stfbkmin2.getText()+" WHERE ID=2");
-                 int b2=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MAX_BOOKS="+stfbkmax2.getText()+" WHERE ID=2");
-                 int b3=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MIN_CDS="+stfcdmin2.getText()+" WHERE ID=2");
-                 int b4=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MAX_CDS="+stfcdmax2.getText()+" WHERE ID=2");
-                 int b5=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MIN_MZS="+stfmzmin2.getText()+" WHERE ID=2");
-                 int b6=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MAX_MZS="+stfmzmax2.getText()+" WHERE ID=2");
-
-
-                 int b7=s.executeUpdate("UPDATE KEYCONSTRAINTS SET BOOK_HOLDING_PERIOD="+stfbkhold2.getText()+" WHERE ID=2");
-                 int b8=s.executeUpdate("UPDATE KEYCONSTRAINTS SET CD_HOLDING_PERIOD="+stfcdhold2.getText()+" WHERE ID=2");
-                 int b9=s.executeUpdate("UPDATE KEYCONSTRAINTS SET MZ_HOLDING_PERIOD="+stfmzhold2.getText()+" WHERE ID=2");
-                 int b10=s.executeUpdate("UPDATE KEYCONSTRAINTS SET FROM_HOLD=TO_CHAR(TO_DATE('"+stfbk_Hld_From2.getText()+"'),'DD-MON-YYYY') WHERE ID=2");
-                 int b11=s.executeUpdate("UPDATE KEYCONSTRAINTS SET TO_HOLD=TO_CHAR(TO_DATE('"+stfbk_Hld_To2.getText()+"'),'DD-MON-YYYY') WHERE ID=2");
-                 int b12=s.executeUpdate("UPDATE KEYCONSTRAINTS SET IMAGE_PATH='"+imagePath2.getText()+"/' WHERE ID=2");
-                 con.commit();
-                 JOptionPane.showMessageDialog(null,"UPDATED");
-
-                 s.close();
-               }
-               catch( SQLException sqlex )
-                        {
-                            if(sqlex.getErrorCode()==936)
-                            {
-                                JOptionPane.showMessageDialog(null,"PLEASE ENTER ALL CONSTRAINTS");
-                            }
-                        }
-
+            	 org.ulibsoft.model.KeyConstraints keyCnst = new org.ulibsoft.model.KeyConstraints();
+            	 
+            	 keyCnst.setId((short)1);
+            	 if ( stdbkmin2.getText() != null )
+            		 keyCnst.setMinBook((short)Integer.parseInt(stdbkmin2.getText()));
+            	 if ( stdbkmax2.getText() != null )
+            		 keyCnst.setMaxBook((short)Integer.parseInt(stdbkmax2.getText()));
+            	 if ( stdbkpd2.getText() != null )
+            		 keyCnst.setMaxDaysPerBook((short)Integer.parseInt(stdbkpd2.getText()));
+            	 if ( stdcdmin2.getText() != null )
+            		 keyCnst.setMinCD((short)Integer.parseInt(stdcdmin2.getText()));
+            	 if ( stdcdmax2.getText() != null )
+            		 keyCnst.setMaxCD((short)Integer.parseInt(stdcdmax2.getText()));
+            	 if ( stdcdpd2.getText() != null )
+            		 keyCnst.setMaxDaysPerCD((short)Integer.parseInt(stdcdpd2.getText()));
+            	 if ( stdmzmin2.getText() != null )
+            		 keyCnst.setMinMZ((short)Integer.parseInt(stdmzmin2.getText()));
+            	 if ( stdmzmax2.getText() != null )
+            		 keyCnst.setMaxMZ((short)Integer.parseInt(stdmzmax2.getText()));
+            	 if ( stdmzpd2.getText() != null )
+            		 keyCnst.setMaxDaysPerMZ((short)Integer.parseInt(stdmzpd2.getText()));
+            	 if ( stdbkRpd2.getText() != null )
+            		 keyCnst.setReneivelPerBook((short)Integer.parseInt(stdbkRpd2.getText()));
+            	 if ( stdbkRcount2.getText() != null )
+            		 keyCnst.setMaxReneivelPerBook((short)Integer.parseInt(stdbkRcount2.getText()));
+            	 if ( stdcdRpd2.getText() != null )
+            		 keyCnst.setReneivelPerBook((short)Integer.parseInt(stdcdRpd2.getText()));
+            	 if ( stdcdRcount2.getText() != null )
+            		 keyCnst.setMaxReneivelPerBook((short)Integer.parseInt(stdcdRcount2.getText()));
+            	 if ( stdbkFine2.getText() != null )
+            		 keyCnst.setFinePerBook((short)Integer.parseInt(stdbkFine2.getText()));
+            	 if ( stdcdFine2.getText() != null )
+            		 keyCnst.setFinePerBook((short)Integer.parseInt(stdcdFine2.getText()));
+            	 if ( stdmzFine2.getText() != null )
+            		 keyCnst.setFinePerBook((short)Integer.parseInt(stdmzFine2.getText()));
+            	 
+            	 int ret = keyCnstDao.update(keyCnst);
+            	 if ( ret <= 0 )
+            	 {
+            		 log.warn("Key Constraintsfor staff updated failed");
+            		 JOptionPane.showMessageDialog(null,"UPDATE FAILED");
+            	 }
+            	 else
+            	 {
+            		 log.info("Key Constraints updated successfully");
+            		 JOptionPane.showMessageDialog(null,"UPDATED");
+            	 }
+            	 
+            	 org.ulibsoft.model.KeyConstraints stfCnst = new org.ulibsoft.model.KeyConstraints();
+            	 stfCnst.setId((short)2);
+            	 if ( stfbkmin2.getText() != null )
+            		 stfCnst.setMinBook((short)Integer.parseInt(stfbkmin2.getText()));
+            	 if ( stfbkmax2.getText() != null )
+            		 stfCnst.setMaxBook((short)Integer.parseInt(stfbkmax2.getText()));
+            	 if ( stfbkhold2.getText() != null )
+            		 stfCnst.setMaxDaysPerBook((short)Integer.parseInt(stfbkhold2.getText()));
+            	 if ( stfcdmin2.getText() != null )
+            		 stfCnst.setMinCD((short)Integer.parseInt(stfcdmin2.getText()));
+            	 if ( stfcdmax2.getText() != null )
+            		 stfCnst.setMaxCD((short)Integer.parseInt(stfcdmax2.getText()));
+            	 if ( stfcdhold2.getText() != null )
+            		 stfCnst.setMaxDaysPerCD((short)Integer.parseInt(stfcdhold2.getText()));
+            	 if ( stfmzmin2.getText() != null )
+            		 stfCnst.setMinMZ((short)Integer.parseInt(stfmzmin2.getText()));
+            	 if ( stfmzmax2.getText() != null )
+            		 stfCnst.setMaxMZ((short)Integer.parseInt(stfmzmax2.getText()));
+            	 if ( stfmzhold2.getText() != null )
+            		 stfCnst.setMaxDaysPerMZ((short)Integer.parseInt(stfmzhold2.getText()));
+            	 try {
+					stfCnst.setBeginDate(DateHelper.parse(stfbk_Hld_From2.getText()));
+					stfCnst.setEndDate(DateHelper.parse(stfbk_Hld_To2.getText()));
+            	 } catch (ParseException e1) {
+					JOptionPane.showMessageDialog(null, "Invalid date format, expected (dd-Mon-yyyy)");						
+            	 }
+            	 int ret1 = keyCnstDao.update(stfCnst);
+            	 if ( ret1 <= 0 )
+            	 {
+            		 log.warn("Key Constraintsfor staff updated failed");
+            		 JOptionPane.showMessageDialog(null,"UPDATE FAILED");
+            	 }
+            	 else
+            	 {
+            		 log.info("Key Constraints updated successfully");
+            		 JOptionPane.showMessageDialog(null,"UPDATED");
+            	 }
              }
            }
            );
@@ -553,6 +589,12 @@ public class KeyConstraints extends JFrame
                 stfbkhold2.setText("");
                 stfcdhold2.setText("");
                 stfmzhold2.setText("");
+                
+                org.ulibsoft.model.KeyConstraints stdKeyCnst = keyCnstDao.findById((short)1);
+                populateStdConstraints(stdKeyCnst);
+                
+                org.ulibsoft.model.KeyConstraints stfKeyCnst = keyCnstDao.findById((short)2);
+                populateStfConstraints(stfKeyCnst);
              }
            }
            );

@@ -18,4 +18,18 @@ public interface KeyConstraintDAO {
 	 * @return
 	 */
 	public KeyConstraints findById(short id);
+	
+	/**
+	 * Create a KeyConstraint
+	 * @param keyCnstrnts
+	 * @return
+	 */
+	public int create(KeyConstraints keyCnstrnts);
+	
+	/**
+	 * Update a KeyConstraint
+	 * @param keyCnstrnts
+	 * @return
+	 */
+	public int update(KeyConstraints keyCnstrnts);
 }
