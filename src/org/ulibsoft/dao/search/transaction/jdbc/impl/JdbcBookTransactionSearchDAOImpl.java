@@ -1254,5 +1254,54 @@ public class JdbcBookTransactionSearchDAOImpl implements
 		}
 		return rows;	
 	}
+	public List<BookModel> availableBooks(String surName, String realName, String bookName)
+	{
+
+		String FETCH_AVAILABLE = "SELECT LIB.ACESSNO ACESSNO,LIB.BOOKNAME BOOKNAME,LIB.AUTHOR1S,LIB.AUTHOR1F AUTHOR FROM LIBRARY LIB  " +
+				" WHERE LIB.AUTHOR1S = ? AND LIB.AUTHOR1F = ? AND LIB.BOOKNAME = ? AND LIB.ACESSNO NOT IN(SELECT BK.CODE FROM BKTRANSACTION BK WHERE BK.CODE=LIB.ACESSNO) " +
+				" AND LIB.ACESSNO NOT IN(SELECT BK1.CODE FROM BKTRANSACTION1 BK1 WHERE BK1.CODE=LIB.ACESSNO ) AND LIB.STATUS IS NULL ";
+		List<BookModel> rows = new ArrayList<BookModel>();
+		try {
+		
+			pstmt = con.prepareStatement(FETCH_AVAILABLE);
+			
+			pstmt.setString(1, surName);
+			pstmt.setString(2, realName);
+			pstmt.setString(3, bookName);
+			rs = pstmt.executeQuery();
+		
+			while (rs.next()) {
+				BookModel bkRcrd = new BookModel();
+				bkRcrd.setAccessNo(rs.getString(1));
+				bkRcrd.setBookName(rs.getString(2));
+				bkRcrd.setAuthor1Surname(rs.getString(3));
+				bkRcrd.setAuthor1Name(rs.getString(4));
+				
+				rows.add(bkRcrd);
+			}
+		} catch (SQLException sqlex) {
+			log.error("SQLException while fetching avialble book records for author: "+surName +" "+realName+" book: "+bookName, sqlex);
+		} finally {
+			if (pstmt != null) {
+				try {
+					pstmt.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the Statement "
+									+ e.getMessage(), e);
+				}
+			}
+			if (rs != null)
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					log.error(
+							"SQLException while closing the ResultSet "
+									+ e.getMessage(), e);
+				}
+		}
+		return rows;
+	
+	}
 
 }

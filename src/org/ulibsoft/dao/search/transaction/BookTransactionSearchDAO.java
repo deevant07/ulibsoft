@@ -151,4 +151,13 @@ public interface BookTransactionSearchDAO {
 	 * @return
 	 */
 	public List<BKTransMemberModel> findMembersPerBook(String bookName, String authorName);
+	
+	/**
+	 * Fetch the list of books by author surname,realname and bookname
+	 * @param surName
+	 * @param realName
+	 * @param bookName
+	 * @return
+	 */
+	public List<BookModel> availableBooks(String surName, String realName, String bookName);
 }

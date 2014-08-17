@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.JButton;
@@ -30,7 +31,9 @@ import javax.swing.border.TitledBorder;
 
 import org.ulibsoft.dao.factory.DAOFactory;
 import org.ulibsoft.dao.search.BookCatalogSearchDAO;
+import org.ulibsoft.dao.search.transaction.BookTransactionSearchDAO;
 import org.ulibsoft.menu.PopUpMenu;
+import org.ulibsoft.model.BookModel;
 import org.ulibsoft.util.AbsoluteConstraints;
 import org.ulibsoft.util.AbsoluteLayout;
 import org.ulibsoft.util.MyDriver;
@@ -55,6 +58,7 @@ public class Copies extends JFrame
     private static int count;
 
     private BookCatalogSearchDAO bkCtlgSrch;
+    private BookTransactionSearchDAO bkTxnSrch;
     public Copies()
       {
         super ("Copies for Specimen");
@@ -67,6 +71,7 @@ public class Copies extends JFrame
          }catch(Exception e){}
         createComponents();
         bkCtlgSrch = DAOFactory.getDAOFactory().getBkCatlogSearchDAO();
+        bkTxnSrch = DAOFactory.getDAOFactory().getBkTranSrchDAO();
         Set<String> itms= bkCtlgSrch.listFirstAuthorSurnames("");
         for ( String itm: itms )
         	an2.addItem(itm);
@@ -219,13 +224,11 @@ public class Copies extends JFrame
                         //TOTAL NUMBER OF COPIES
                     	int count = bkCtlgSrch.countBooks(an2.getSelectedItem(), an1.getSelectedItem(), bn1.getSelectedItem());
                     	tn.setText( String.valueOf(count) );
+                    	                    	                    	
                         //AVAILABLE NO OF COPIES
-                       // rs = s.executeQuery("SELECT COUNT(BOOKNAME) FROM TEMPLIBRARY WHERE AUTHOR="+"'"+an2.getSelectedItem()+""+an1.getSelectedItem() +"'"+"AND BOOKNAME="+"'"+bn1.getSelectedItem()+"'" );
-                          rs=s.executeQuery("SELECT COUNT(LIB.ACESSNO) FROM LIBRARY LIB WHERE  LIB.BOOKNAME ="+"'"+bn1.getSelectedItem()+"'"+"AND LIB.AUTHOR1S="+"'"+an2.getSelectedItem()+"'"+"AND LIB.AUTHOR1F="+"'"+an1.getSelectedItem() +"'"+" AND LIB.ACESSNO NOT IN(SELECT BK.CODE FROM BKTRANSACTION BK WHERE BK.CODE=LIB.ACESSNO) AND LIB.ACESSNO NOT IN(SELECT BK1.CODE FROM BKTRANSACTION1 BK1 WHERE BK1.CODE=LIB.ACESSNO ) ");
-                           while( rs.next() )
-                             {
-                               ano.setText( rs.getString(1) );
-                             }
+                    	List<BookModel> books = bkTxnSrch.availableBooks(an2.getSelectedItem(), an1.getSelectedItem(), bn1.getSelectedItem());
+                    	if ( books != null )
+                    		ano.setText( String.valueOf(books.size()) );
 
                         //ISSUED NUMBER OF COPIES
                         //rs = s.executeQuery("SELECT COUNT(BOOKNAME) FROM BKTRANSACTION  WHERE AUTHOR="+"'"+an2.getSelectedItem() +""+an1.getSelectedItem()+"'"+"AND BOOKNAME="+"'"+bn1.getSelectedItem()+"'" );
