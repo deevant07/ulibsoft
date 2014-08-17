@@ -1,10 +1,35 @@
 package org.ulibsoft.search.entitySearch;
 
-import java.awt.*;
-import javax.swing.*;
-import java.awt.event.*;
-import java.sql.*;
-import javax.swing.border.*;
+import java.awt.Choice;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Set;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.border.TitledBorder;
+
+import org.ulibsoft.dao.factory.DAOFactory;
+import org.ulibsoft.dao.search.BookCatalogSearchDAO;
 import org.ulibsoft.menu.PopUpMenu;
 import org.ulibsoft.util.AbsoluteConstraints;
 import org.ulibsoft.util.AbsoluteLayout;
@@ -13,7 +38,11 @@ import org.ulibsoft.util.ScreenResolution;
 
 public class Copies extends JFrame
   {
-    private JLabel bn,an,tnb,anb,inb,xyz,ans;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1032517238021529500L;
+	private JLabel bn,an,tnb,anb,inb,xyz,ans;
     private JTextField tn,ano,ino;
     private Choice bn1,an1,an2;
     private JButton next,can;
@@ -25,6 +54,7 @@ public class Copies extends JFrame
     private Connection con;
     private static int count;
 
+    private BookCatalogSearchDAO bkCtlgSrch;
     public Copies()
       {
         super ("Copies for Specimen");
@@ -36,6 +66,11 @@ public class Copies extends JFrame
           con=MyDriver.getConnection();
          }catch(Exception e){}
         createComponents();
+        bkCtlgSrch = DAOFactory.getDAOFactory().getBkCatlogSearchDAO();
+        Set<String> itms= bkCtlgSrch.listFirstAuthorSurnames("");
+        for ( String itm: itms )
+        	an2.addItem(itm);
+        
         componentListener();
         MyAdapter4 myap = new MyAdapter4();
         addWindowListener(myap);
@@ -59,23 +94,6 @@ public class Copies extends JFrame
 
         an2=new Choice();
         an2.setForeground (new Color ( 255, 0, 153 ) );
-
-         try
-             {
-                s = con.createStatement();
-                rs = s.executeQuery("SELECT DISTINCT(AUTHOR1S) FROM LIBRARY ORDER BY AUTHOR1S");
-                   while(rs.next ())
-                     {
-                        an2.addItem(rs.getString(1));
-                     }
-                s.close();
-
-             }
-           catch(SQLException se)
-             {
-                JOptionPane.showMessageDialog (null,se.getMessage ());
-                se.printStackTrace();
-             }
 
         bkpn.add(an2,new AbsoluteConstraints(200,30,175,20));
 
@@ -166,21 +184,9 @@ public class Copies extends JFrame
               {
                 count++;
                 an1.removeAll();
-                try
-                  {
-                    s = con.createStatement();
-                    rs = s.executeQuery("SELECT DISTINCT(AUTHOR1F) FROM LIBRARY WHERE AUTHOR1S="+"'"+an2.getSelectedItem()+"'"+"ORDER BY AUTHOR1F");
-                       while( rs.next () )
-                         {
-                           an1.addItem (rs.getString(1));
-                         }
-                    s.close();
-                  }
-                catch(SQLException se)
-                  {
-                    JOptionPane.showMessageDialog (null,se.getMessage ());
-                    se.printStackTrace();
-                  }
+                Set<String> itms= bkCtlgSrch.listFirstAuthorNames(an2.getSelectedItem());
+                for ( String itm: itms )
+                	an1.addItem(itm);                
               }
           }
         );
@@ -190,22 +196,10 @@ public class Copies extends JFrame
             public void itemStateChanged(ItemEvent e)
               {
                 count++;
-                try
-                  {
-                    s = con.createStatement();
-                    bn1.removeAll();
-                    rs = s.executeQuery("SELECT DISTINCT(BOOKNAME) FROM LIBRARY WHERE AUTHOR1S="+"'"+an2.getSelectedItem()+"'"+"AND AUTHOR1F="+"'"+an1.getSelectedItem()+"'" +"ORDER BY BOOKNAME");
-                       while( rs.next () )
-                         {
-                           bn1.addItem(rs.getString(1));
-                         }
-                    s.close();
-                  }
-                catch(SQLException se)
-                  {
-                    JOptionPane.showMessageDialog (null,se.getMessage ());
-                    se.printStackTrace();
-                  }
+                bn1.removeAll();
+                Set<String> itms= bkCtlgSrch.listBookNames(an2.getSelectedItem(), an1.getSelectedItem());
+                for ( String itm: itms )
+                	bn1.addItem(itm);                
               }
 
           }
@@ -221,13 +215,10 @@ public class Copies extends JFrame
                     s = con.createStatement();
                     if(count>=3)
                      {
+                    	
                         //TOTAL NUMBER OF COPIES
-                        rs = s.executeQuery("SELECT COUNT(BOOKNAME) FROM LIBRARY WHERE  BOOKNAME="+"'"+bn1.getSelectedItem()+"'"+"AND AUTHOR1S ="+"'"+an2.getSelectedItem()+"'"+"AND AUTHOR1F="+"'"+an1.getSelectedItem() +"'" );
-                           while( rs.next ())
-                             {
-                               tn.setText( rs.getString(1) );
-                             }
-
+                    	int count = bkCtlgSrch.countBooks(an2.getSelectedItem(), an1.getSelectedItem(), bn1.getSelectedItem());
+                    	tn.setText( String.valueOf(count) );
                         //AVAILABLE NO OF COPIES
                        // rs = s.executeQuery("SELECT COUNT(BOOKNAME) FROM TEMPLIBRARY WHERE AUTHOR="+"'"+an2.getSelectedItem()+""+an1.getSelectedItem() +"'"+"AND BOOKNAME="+"'"+bn1.getSelectedItem()+"'" );
                           rs=s.executeQuery("SELECT COUNT(LIB.ACESSNO) FROM LIBRARY LIB WHERE  LIB.BOOKNAME ="+"'"+bn1.getSelectedItem()+"'"+"AND LIB.AUTHOR1S="+"'"+an2.getSelectedItem()+"'"+"AND LIB.AUTHOR1F="+"'"+an1.getSelectedItem() +"'"+" AND LIB.ACESSNO NOT IN(SELECT BK.CODE FROM BKTRANSACTION BK WHERE BK.CODE=LIB.ACESSNO) AND LIB.ACESSNO NOT IN(SELECT BK1.CODE FROM BKTRANSACTION1 BK1 WHERE BK1.CODE=LIB.ACESSNO ) ");
