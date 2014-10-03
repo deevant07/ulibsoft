@@ -11,17 +11,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
@@ -33,10 +28,10 @@ import org.ulibsoft.dao.factory.DAOFactory;
 import org.ulibsoft.dao.search.BookCatalogSearchDAO;
 import org.ulibsoft.dao.search.transaction.BookTransactionSearchDAO;
 import org.ulibsoft.menu.PopUpMenu;
+import org.ulibsoft.model.BKTransMemberModel;
 import org.ulibsoft.model.BookModel;
 import org.ulibsoft.util.AbsoluteConstraints;
 import org.ulibsoft.util.AbsoluteLayout;
-import org.ulibsoft.util.MyDriver;
 import org.ulibsoft.util.ScreenResolution;
 
 public class Copies extends JFrame
@@ -45,30 +40,19 @@ public class Copies extends JFrame
 	 * 
 	 */
 	private static final long serialVersionUID = -1032517238021529500L;
-	private JLabel bn,an,tnb,anb,inb,xyz,ans;
+	private JLabel bn,an,tnb,anb,inb,ans;
     private JTextField tn,ano,ino;
     private Choice bn1,an1,an2;
     private JButton next,can;
     private JPanel bkpn;
     private Container c;
-    private String s1,s2;
-    private ResultSet rs,rs1;
-    private Statement s;
-    private Connection con;
-    private static int count;
-
     private BookCatalogSearchDAO bkCtlgSrch;
     private BookTransactionSearchDAO bkTxnSrch;
     public Copies()
       {
         super ("Copies for Specimen");
         setSize(ScreenResolution.SCREEN_WIDTH, ScreenResolution.SCREEN_HEIGHT);
-        show();
-
-       try
-         {
-          con=MyDriver.getConnection();
-         }catch(Exception e){}
+        setVisible(true);       
         createComponents();
         bkCtlgSrch = DAOFactory.getDAOFactory().getBkCatlogSearchDAO();
         bkTxnSrch = DAOFactory.getDAOFactory().getBkTranSrchDAO();
@@ -186,8 +170,7 @@ public class Copies extends JFrame
         an2.addItemListener(new ItemListener()
           {
             public void itemStateChanged(ItemEvent e)
-              {
-                count++;
+              {                
                 an1.removeAll();
                 Set<String> itms= bkCtlgSrch.listFirstAuthorNames(an2.getSelectedItem());
                 for ( String itm: itms )
@@ -199,8 +182,7 @@ public class Copies extends JFrame
         an1.addItemListener(new ItemListener()
           {
             public void itemStateChanged(ItemEvent e)
-              {
-                count++;
+              {                
                 bn1.removeAll();
                 Set<String> itms= bkCtlgSrch.listBookNames(an2.getSelectedItem(), an1.getSelectedItem());
                 for ( String itm: itms )
@@ -213,46 +195,27 @@ public class Copies extends JFrame
         bn1.addItemListener(new ItemListener()
           {
             public void itemStateChanged(ItemEvent e)
-              {
-                count++;
-                try
-                  {
-                    s = con.createStatement();
-                    if(count>=3)
-                     {
-                    	
-                        //TOTAL NUMBER OF COPIES
-                    	int count = bkCtlgSrch.countBooks(an2.getSelectedItem(), an1.getSelectedItem(), bn1.getSelectedItem());
-                    	tn.setText( String.valueOf(count) );
-                    	                    	                    	
-                        //AVAILABLE NO OF COPIES
-                    	List<BookModel> books = bkTxnSrch.availableBooks(an2.getSelectedItem(), an1.getSelectedItem(), bn1.getSelectedItem());
-                    	if ( books != null )
-                    		ano.setText( String.valueOf(books.size()) );
+              {                                  
+                if(bn1.getSelectedItem() != null && bn1.getSelectedItem().length() > 0 )
+                 {
+                	
+                    //TOTAL NUMBER OF COPIES
+                	int count = bkCtlgSrch.countBooks(an2.getSelectedItem(), an1.getSelectedItem(), bn1.getSelectedItem());
+                	tn.setText( String.valueOf(count) );
+                	                    	                    	
+                    //AVAILABLE NO OF COPIES
+                	List<BookModel> books = bkTxnSrch.availableBooks(an2.getSelectedItem(), an1.getSelectedItem(), bn1.getSelectedItem());
+                	if ( books != null )
+                		ano.setText( String.valueOf(books.size()) );
 
-                        //ISSUED NUMBER OF COPIES
-                        //rs = s.executeQuery("SELECT COUNT(BOOKNAME) FROM BKTRANSACTION  WHERE AUTHOR="+"'"+an2.getSelectedItem() +""+an1.getSelectedItem()+"'"+"AND BOOKNAME="+"'"+bn1.getSelectedItem()+"'" );
-                            rs=s.executeQuery("SELECT COUNT(CODE) FROM BKTRANSACTION WHERE CODE IN(SELECT ACESSNO FROM LIBRARY WHERE BOOKNAME ="+"'"+bn1.getSelectedItem()+"'"+"AND AUTHOR1S="+"'"+an2.getSelectedItem()+"'"+"AND AUTHOR1F="+"'"+an1.getSelectedItem() +"'"+")");
-                           while( rs.next() )
-                             {
-                                s1=rs.getString(1);
-                             }
-                       // rs1 = s.executeQuery("SELECT COUNT(BOOKNAME) FROM BKTRANSACTION1  WHERE AUTHOR="+"'"+an2.getSelectedItem()+"'"+"AND BOOKNAME="+"'"+bn1.getSelectedItem()+"'" );
-                           rs1=s.executeQuery("SELECT COUNT(CODE) FROM BKTRANSACTION1 WHERE CODE IN(SELECT ACESSNO FROM LIBRARY WHERE BOOKNAME ="+"'"+bn1.getSelectedItem()+"'"+"AND AUTHOR1S="+"'"+an2.getSelectedItem()+"'"+"AND AUTHOR1F="+"'"+an1.getSelectedItem() +"'"+")");
-                            while(rs1.next())
-                              {
-                                s2=rs1.getString(1);
-                              }
-
-                        ino.setText(Integer.toString(Integer.parseInt(s1)+Integer.parseInt(s2)));
-                        s.close();
-                     }
-                  }
-                catch(SQLException sqlex)
-                  {
-                    JOptionPane.showMessageDialog(null,sqlex.getMessage(),"Exception",JOptionPane.ERROR_MESSAGE);
-                    sqlex.printStackTrace();
-                  }
+                    //ISSUED NUMBER OF COPIES                	
+                	List<BKTransMemberModel> bkMembrs = bkTxnSrch.findMembersPerBook(bn1.getSelectedItem(), an2.getSelectedItem()+ an1.getSelectedItem());
+                    
+                	if ( bkMembrs != null )
+                		ino.setText(Integer.toString(bkMembrs.size()));                   
+                    
+                 }
+                  
               }
           }
         );
@@ -286,15 +249,7 @@ public class Copies extends JFrame
       {
         public void windowClosing(WindowEvent wt)
           {
-            try
-              {
-                con.close();
-              }
-            catch( SQLException sqlex )
-              {
-                JOptionPane.showMessageDialog(null,"UNABLE TO DISCONNECT","Exception",JOptionPane.ERROR_MESSAGE);
-                sqlex.printStackTrace();
-              }
+        	setVisible(false);
           }
       }
       public static void main(String a[])
