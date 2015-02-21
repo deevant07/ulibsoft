@@ -1,15 +1,35 @@
 package org.ulibsoft.search.catalog;
 
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.border.*;
-import java.sql.*;
-import java.util.*;
-import java.io.*;
-import javax.swing.text.JTextComponent;
-import java.text.MessageFormat;
-import java.awt.print.PrinterException;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Set;
+
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.border.TitledBorder;
+
+import org.ulibsoft.dao.factory.DAOFactory;
+import org.ulibsoft.dao.search.BookCatalogSearchDAO;
 import org.ulibsoft.menu.PopUpMenu;
 import org.ulibsoft.util.AbsoluteConstraints;
 import org.ulibsoft.util.AbsoluteLayout;
@@ -21,7 +41,7 @@ public class Library1 extends JFrame
    private JLabel     publisher,acessno,author,xyz,bname;
    private JTextField title,pub1,aut;
    private JTextField ACESSNO;
-   private JComboBox AUTHOR,bname1,PUBLISHER;
+   private JComboBox<String> AUTHOR,bname1,PUBLISHER;
    private JButton    Search,Next_Rec,Quit,clear,print,edit;
    private JLabel     output1,output2,output3,output4,output5,output6,output7,output8,output9;
    private String     acn,pub,atr,output;
@@ -42,14 +62,17 @@ public class Library1 extends JFrame
    private Connection con;
    private ResultSet  rs;
    private String TITLE="",PUB="",AUT="";
+   
+   private BookCatalogSearchDAO bkSrchDao;
 
    public Library1()
      {
         super("SEARCH BY TYPE");
         setSize(ScreenResolution.SCREEN_WIDTH, ScreenResolution.SCREEN_HEIGHT);
-        show();
+        bkSrchDao = DAOFactory.getDAOFactory().getBkCatlogSearchDAO();
 
         createComponents();
+        setVisible(true);
         //odbcConnection();
          try
          {
@@ -89,7 +112,7 @@ public class Library1 extends JFrame
         bname.setForeground(new Color(120,120,153));
         bkpn.add(bname,new AbsoluteConstraints( 30,61) );
 
-        bname1   = new JComboBox();
+        bname1   = new JComboBox<>();
         bname1.setEditable(true);
         bname1.setVisible(false);
         bname1.setForeground(new Color(255,0,153));
@@ -107,7 +130,7 @@ public class Library1 extends JFrame
         author.setForeground(new Color(120,120,153));
         bkpn.add(author,new AbsoluteConstraints( 55, 91) );
 
-        AUTHOR    = new JComboBox();
+        AUTHOR    = new JComboBox<>();
         AUTHOR.setEditable(true);
         AUTHOR.setVisible(false);
         AUTHOR.setForeground(new Color(255,0,153));
@@ -126,7 +149,7 @@ public class Library1 extends JFrame
         publisher.setForeground( new Color( 120, 120, 153 ));
         bkpn.add(publisher,new AbsoluteConstraints( 38,121) );
 
-        PUBLISHER = new JComboBox();
+        PUBLISHER = new JComboBox<>();
         PUBLISHER.setEditable(true);
         PUBLISHER.setVisible(false);
         PUBLISHER.setForeground( new Color(255,0,153 ));
@@ -260,30 +283,19 @@ public class Library1 extends JFrame
             {
               public void actionPerformed(ActionEvent e)
                 {
-
-                      try
-                        {
-                          //MyDriver.getConnection();
-                          s = con.createStatement();
-                        rs = s.executeQuery( "SELECT DISTINCT(BOOKNAME) FROM LIBRARY WHERE BOOKNAME LIKE "+"'"+title.getText().toUpperCase()+"%"+"'" );
-                          while( rs.next() )
-                           {
-
-                              bname1.addItem(rs.getObject(1));
-                              ++count;
-                           }
-                         if(count>0)
-                          {
-                             bname1.setVisible(true);
-                             title.setVisible(false);
-                          }
-                        }
-                      catch(SQLException sq)
-                        {
-                          JOptionPane.showMessageDialog(null,"Title: "+sq.getMessage());
-                        }
-
-                    }
+            	  Set<String> bNames = bkSrchDao.listBookNames(title.getText().toUpperCase());
+            	  if ( !bNames.isEmpty() )
+            	  {
+            		  bname1.setVisible(true);
+                      title.setVisible(false);
+                      for ( String bName : bNames )
+                	  {
+                    	  bname1.addItem(bName);
+                	  }  
+                      bname1.setSelectedIndex(0);
+                      bname1.setFocusable(true);                      
+            	  }
+               }
             }
           );
 
@@ -291,31 +303,17 @@ public class Library1 extends JFrame
             {
               public void actionPerformed(ActionEvent e)
                 {
-
-                      try
-                        {
-                          s = con.createStatement();
-                          rs = s.executeQuery( "SELECT DISTINCT(AUTHOR1S) FROM LIBRARY WHERE AUTHOR1S LIKE "+"'"+aut.getText().toUpperCase()+"%"+"'");
-                          //rs = s.executeQuery( "SELECT DISTINCT(AUTHOR1S),DISTINCT(AUTHOR1F) FROM LIBRARY WHERE AUTHOR1S LIKE "+"'"+aut.getText().toUpperCase()+"%"+"'"+"OR AUTHOR1F LIKE "+"'"+aut.getText().toUpperCase()+"%"+"'" );
-                          while( rs.next() )
-                           {
-
-                              AUTHOR.addItem(rs.getObject(1));
-                             // AUTHOR.addItem(rs.getObject(2));
-                              ++count1;
-                           }
-                         if(count1>0)
-                          {
-                             AUTHOR.setVisible(true);
-                             aut.setVisible(false);
-                          }
-                        }
-                      catch(SQLException sq)
-                        {
-                          JOptionPane.showMessageDialog(null,"Author: "+sq.getMessage());
-                        }
-
-                    }
+            	  Set<String> authorNames = bkSrchDao.listAuthorSurnames(aut.getText().toUpperCase());
+            	  if ( !authorNames.isEmpty() )
+            	  {
+            		  AUTHOR.setVisible(true);
+                      aut.setVisible(false);
+                      for ( String aName : authorNames )
+                	  {
+                    	  AUTHOR.addItem(aName);
+                	  } 
+            	  } 
+                }
             }
           );
 
@@ -323,29 +321,18 @@ public class Library1 extends JFrame
             {
               public void actionPerformed(ActionEvent e)
                 {
-
-                      try
-                        {
-                          s = con.createStatement();
-                        rs = s.executeQuery( "SELECT DISTINCT(PUBLISHER) FROM LIBRARY WHERE PUBLISHER LIKE "+"'"+pub1.getText().toUpperCase()+"%"+"'" );
-                          while( rs.next() )
-                           {
-
-                              PUBLISHER.addItem(rs.getObject(1));
-                              ++count2;
-                           }
-                         if(count2>0)
-                          {
-                             PUBLISHER.setVisible(true);
-                             pub1.setVisible(false);
-                          }
-                        }
-                      catch(SQLException sq)
-                        {
-                          JOptionPane.showMessageDialog(null,"Publisher: "+ sq.getMessage());
-                        }
-
-                    }
+            	  
+            	  Set<String> publshrNames = bkSrchDao.listPublishers(pub1.getText().toUpperCase());
+            	  if ( !publshrNames.isEmpty() )
+            	  {
+            		  PUBLISHER.setVisible(true);
+                      pub1.setVisible(false);
+                      for ( String pubName : publshrNames )
+                	  {
+                    	  PUBLISHER.addItem(pubName);
+                	  } 
+            	  } 
+                }
             }
           );
 
@@ -576,8 +563,7 @@ public class Library1 extends JFrame
            print.setVisible(false);
            Search.setVisible(true);
 
-           System.gc();
-
+           
            title.setText("");
            pub1.setText("");
            aut.setText("");

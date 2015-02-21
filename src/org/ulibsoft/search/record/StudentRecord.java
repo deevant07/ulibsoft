@@ -5,8 +5,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.print.PrinterException;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.Vector;
 
@@ -15,8 +13,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.BevelBorder;
@@ -24,9 +20,9 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.border.TitledBorder;
 
+import org.ulibsoft.core.ui.CustomTable;
 import org.ulibsoft.dao.factory.DAOFactory;
 import org.ulibsoft.dao.search.transaction.TransactionHistorySearchDAO;
-import org.ulibsoft.login.Login;
 import org.ulibsoft.model.TransMemberModel;
 import org.ulibsoft.util.AbsoluteConstraints;
 import org.ulibsoft.util.AbsoluteLayout;
@@ -35,13 +31,17 @@ import org.ulibsoft.util.datatype.DateHelper;
 
 public class StudentRecord extends JFrame
 {
-     private JLabel adno;
+     /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2063759837934677570L;
+	private JLabel adno;
      private JTextField no;
      private JButton find,can,next;
      private JButton but1,but2,print1;
      private JLabel but0;
      private JPanel cmppn,p2;
-     private JTable sttable;
+     private CustomTable sttable;
      private Container c;
 
      private TransactionHistorySearchDAO tranHstrySrchDAO;
@@ -181,34 +181,7 @@ public class StudentRecord extends JFrame
            }
            );
 
-           print1.addActionListener(new ActionListener()
-            {
-               public void actionPerformed(ActionEvent e)
-                 {
-                     try
-                     {
-                       if(sttable!=null) {
-                       java.util.Date date=new java.util.Date();
-                       boolean success= sttable.print( JTable.PrintMode.NORMAL,
-                                                       new MessageFormat("STUDENT'S RECORD SEARCH ->"+date.getDate()+"/"+date.getMonth()+"/"+(1900+date.getYear())),
-                                                       new MessageFormat("STUDENT'S RECORD SEARCH ->"+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()),
-                                                       true,
-                                                       null,
-                                                       true
-                                                      );
-                       }
-                       else
-                         {
-                           JOptionPane.showMessageDialog(null,"Plz Choose query to print");
-                         }
-                     }
-                   catch(PrinterException pex)
-                     {
-                        JOptionPane.showMessageDialog(null,""+pex.getMessage());
-                     }
-                 }
-            }
-          );
+          
           next.addActionListener( new ActionListener()
              {
                 public void actionPerformed( ActionEvent e )
@@ -229,8 +202,8 @@ public class StudentRecord extends JFrame
           }
         );
       }     
-     private Vector<Object> getDisplayColumns() {
- 		Vector<Object> cols = new Vector<Object>();
+     private Vector<String> getDisplayColumns() {
+ 		Vector<String> cols = new Vector<String>();
  		cols.add("Code");
  		cols.add("Name");
  		cols.add("Author/Version");
@@ -247,7 +220,7 @@ public class StudentRecord extends JFrame
  			return;
  		}
 
- 		Vector<Object> rows = new Vector<Object>();
+ 		Vector<Vector<Object>> rows = new Vector<Vector<Object>>();
  		for (TransMemberModel row : records) {
  			Vector<Object> rowData = new Vector<Object>();
  			rowData.add(row.getCode());
@@ -258,13 +231,11 @@ public class StudentRecord extends JFrame
  			rowData.add(row.getType());
  			rows.add(rowData);
  		}
- 		sttable = new JTable(rows,getDisplayColumns());
-        sttable.setBackground(Color.pink);
-        sttable.setEnabled (false);
-        p2.add(sttable,BorderLayout.CENTER);
-        JScrollPane spane =new JScrollPane(sttable);
-        p2.add(spane,BorderLayout.CENTER);
-        validate();		
+ 		        
+        sttable = new CustomTable(getDisplayColumns(),"STUDENT TRANSACTION HISTORY");
+		sttable.populateData(rows);		
+        p2.add(sttable.getPanel(),BorderLayout.CENTER);
+        validate();
  	}
      public static void main( String a[] )
        {

@@ -35,7 +35,6 @@ import javax.swing.border.TitledBorder;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.ulibsoft.core.ui.MyImageIcon;
 import org.ulibsoft.dao.catalog.BookCatalogDAO;
-import org.ulibsoft.dao.core.KeyConstraintDAO;
 import org.ulibsoft.dao.factory.DAOFactory;
 import org.ulibsoft.dao.search.BookCatalogSearchDAO;
 import org.ulibsoft.dao.search.transaction.BookTransactionSearchDAO;
@@ -45,7 +44,6 @@ import org.ulibsoft.model.BKStaffModel;
 import org.ulibsoft.model.BKStudentModel;
 import org.ulibsoft.model.BKTransactionModel;
 import org.ulibsoft.model.BookModel;
-import org.ulibsoft.model.KeyConstraints;
 import org.ulibsoft.util.AbsoluteConstraints;
 import org.ulibsoft.util.AbsoluteLayout;
 import org.ulibsoft.util.ScreenResolution;
@@ -53,16 +51,18 @@ import org.ulibsoft.util.datatype.DateHelper;
 
 public class Library2 extends JFrame
   {
-     private int first,second;
-
-     private JLabel  bookname,aut1s,aut1f,aut2s,aut2f,aut3s,aut3f,aut4s,aut4f,aut5f,aut5s;
+     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 3571560951660073305L;
+	private JLabel  bookname,aut1s,aut1f,aut2s,aut2f,aut3s,aut3f,aut4s,aut4f,aut5f,aut5s;
      private JLabel  volume,series,src_pub,bill_no,price,call_no,with_draw,rec_dt;
      private JLabel  acess,pub,edt,isbn,note,des,phy,place,year;
-     private JLabel  sub1,sub2,sub3,xyz;
+     private JLabel  sub1,sub2,sub3;
 
      private JLabel adno,name,image,branch,year2;
      private JLabel adno1,name1,branch1,year3;
-     private Icon   icon1,icon;
+     private Icon   icon;
      private JLabel adno2,name2,image1,branch2,year4;
      private JLabel adno3,name3,branch3,year5;
 
@@ -77,7 +77,7 @@ public class Library2 extends JFrame
      private JTextField des1,note1;
      private JTextField title,aut1,aut2,aut3,aut4,aut5,aut6,aut7,aut8,aut9,aut10,place2,pub2;
      private String TITLE="",AUT1="",AUT2="",AUT3="",AUT4="",AUT5="",AUT6="",AUT7="",AUT8="",AUT9="",AUT10="";
-     private String PLACE="",PUB="",SUB2="",PATH;
+     private String PLACE="",PUB="",SUB2="";
 
      private JButton ins,next,quit,up,mis;
      private JTable lib;
@@ -670,7 +670,7 @@ public class Library2 extends JFrame
 		image.setBorder(new MatteBorder(1, 1, 1, 1, new Color(0, 0, 100)));
 		despn.add(image, new AbsoluteConstraints(240, 20, 100, 110));
 
-		icon1 = new ImageIcon("empty.jpg");
+		new ImageIcon("empty.jpg");
 
 		branch = new JLabel();
 		branch.setForeground(new Color(0, 0, 100));
@@ -723,7 +723,7 @@ public class Library2 extends JFrame
 		image1.setBorder(new MatteBorder(1, 1, 1, 1, Color.cyan));
 		despn.add(image1, new AbsoluteConstraints(240, 20, 100, 110));
 
-		icon1 = new ImageIcon("empty.jpg");
+		new ImageIcon("empty.jpg");
 
 		branch2 = new JLabel();
 		branch2.setForeground(new Color(0, 0, 100));
@@ -1025,7 +1025,7 @@ public class Library2 extends JFrame
                     	  aut5f1.addItem(aName);
                 	  } 
             	  }                  
-                }
+                }	
             }
           );
 
@@ -1033,7 +1033,7 @@ public class Library2 extends JFrame
             {
               public void actionPerformed(ActionEvent e)
                 {
-            	  Set<String> publshrNames = bkSrchDao.listAuthorNames(pub2.getText().toUpperCase());
+            	  Set<String> publshrNames = bkSrchDao.listPublishers(pub2.getText().toUpperCase());
             	  if ( !publshrNames.isEmpty() )
             	  {
             		  pub1.setVisible(true);
